@@ -2,62 +2,50 @@
 
 Overview
 
-cl_test.py is a Python script designed for automated file downloading, image processing, steganography detection, malware scanning, and object recognition. It supports multiple file types and utilizes advanced AI models such as YOLO and TrOCR for object and text detection. The script is optimized for both Windows and Linux and can install necessary dependencies automatically.
+StegoScan.py is a Python script designed for automated website and local steganography detection and basic malware scanning. It supports common file types like png, jpg, bin, pdf, docx, wav, and mp3. It utilizes advanced AI models such as YOLO and TrOCR for object and text detection of potentially embeded images/messages. The script is optimized for Linux and will install necessary dependencies automatically.
 
-Features
+## Features
 
-Automated Virtual Environment Setup: Creates and manages a Python virtual environment.
+* Web Scraping & File Downloading: Extracts and downloads specific file types from URLs.
 
-Dependency Management: Installs missing Python packages automatically.
+* Image Processing & Steganography Analysis:
 
-Cross-Platform Support: Works on Windows and Linux, including Windows Subsystem for Linux (WSL).
+* Extracts images from PDFs and DOCX files.
 
-Web Scraping & File Downloading: Extracts and downloads specific file types from URLs.
+* Detects steganographic messages in images using stegano, stegdetect, and zsteg.
 
-Image Processing & Steganography Analysis:
+* Object Detection & Text Recognition for embeded images:
 
-Extracts images from PDFs and DOCX files.
+* Uses YOLOv8 for object detection.
 
-Detects steganographic messages in images using stegano, stegdetect, and zsteg.
+* Uses TrOCR for handwriting recognition.
 
-Object Detection & Text Recognition:
+* Basic Malware & ELF File Analysis:
 
-Uses YOLOv8 for object detection.
+* Audio & Binary File Analysis:
 
-Uses TrOCR for handwriting recognition.
+* Uses binwalk for binary file structure extraction.
 
-Malware & ELF File Analysis:
+* Multi-threading Support: Improves performance for large-scale file processing.
 
-Scans ELF binaries using YARA rules.
+# Installation
 
-Checks file entropy to detect obfuscation or encryption.
-
-Audio & Binary File Analysis:
-
-Converts MP3 to WAV for deeper analysis.
-
-Uses binwalk for binary file structure extraction.
-
-Multi-threading Support: Improves performance for large-scale file processing.
-
-Installation
-
-# Clone the repository
+## Clone the repository
 git clone <repository-url>
 cd <repository-folder>
 
-# Run the script; it will automatically create a virtual environment and install dependencies
+## Run the script; it will automatically create a virtual environment and install dependencies
 python cl_test.py
 
-Usage
+# Usage
 
 The script can be run with different arguments to perform various tasks.
 
-Basic Usage
+## Basic Usage
 
 python cl_test.py -u "https://example.com" -t "pdf,jpg,png" -n 10 -o "downloads" -m "all"
 
-Arguments:
+# Arguments:
 
 -u, --url : Base URL(s), IP address(es), or IP range(s) to scrape files from.
 
@@ -71,43 +59,55 @@ Arguments:
 
 -l, --local : Path to a local file or directory for analysis.
 
-Example Commands
+# Example Commands
 
-# Download files from a URL
+## Download files from a URL
 python cl_test.py -u "https://example.com" -t "jpg,png" -n 5 -o "downloads"
 
-# Analyze a local directory
+## Analyze a local directory
 python cl_test.py -l "path/to/local/files" -t "*" -o "downloads" -m "all"
 
-Dependencies
+# Dependencies
 
 The script automatically installs required dependencies, including:
 
 requests
+
 beautifulsoup4
+
 pdf2image
+
 python-docx
+
 stegano
+
 pillow
+
 opencv-python
+
 numpy
+
 matplotlib
+
 tqdm
+
 torch
+
 transformers
+
 ultralytics
+
 PyPDF2
+
 yara-python
 
-Notes
-
-Windows users: Ensure poppler is installed and added to PATH for PDF processing.
+# Notes
 
 Linux users: The script installs poppler-utils, stegdetect, binwalk, and zsteg automatically.
 
 GPU acceleration is used if a CUDA-compatible GPU is detected.
 
-Future Enhancements
+# Future Enhancements
 
 Expand malware analysis with more YARA rules.
 
@@ -115,7 +115,7 @@ Improve object detection using advanced image processing techniques.
 
 Automate Google Drive scanning and crawling functionalities.
 
-License
+# License
 
 This project is open-source and available under the MIT License.
 
