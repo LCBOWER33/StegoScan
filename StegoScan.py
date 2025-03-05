@@ -101,6 +101,26 @@ install_linux_dependencies()
 configure_windows_poppler()
 install_missing_packages()
 
+
+import warnings
+import logging
+import sys
+import transformers
+
+# Suppress warnings
+warnings.simplefilter("ignore", category=DeprecationWarning)
+warnings.simplefilter("ignore", category=RuntimeWarning)
+
+# Suppress logging from models
+transformers.logging.set_verbosity_error()
+logging.getLogger("transformers").setLevel(logging.ERROR)
+logging.getLogger("torch").setLevel(logging.ERROR)
+logging.getLogger("ultralytics").setLevel(logging.ERROR)
+
+# Optional: Redirect stderr to suppress all warnings (use with caution)
+sys.stderr = open(os.devnull, "w")
+
+
 import argparse
 import requests
 import shutil
@@ -142,6 +162,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # Load the pre-trained YOLOv8 model
 model = YOLO("yolov8l.pt").to(device)  # Use 'yolov8s.pt' for a smaller, faster model
+model.overrides['verbose'] = False  # Suppress model output
 
 # Load the pre-trained TrOCR model and processor
 processor = TrOCRProcessor.from_pretrained("microsoft/trocr-base-handwritten")
@@ -550,7 +571,12 @@ def process_and_save(image, variant_name):
     text_detected = text_detected_grayscale or text_detected_color
 
     if object_detected:  # or text_detected:
-        save_path = os.path.join(results_folder, f"{variant_name}.png")
+        # NEED TO MAKE IT ROUTE TO THE OUTPUT DIR THEN HERE
+        object_detection_dir = os.path.join(results_folder, "object_detection")
+        os.makedirs(object_detection_dir, exist_ok=True)
+
+        save_path = os.path.join(results_folder, f"object_detection/{variant_name}.png")
+        # print("\n\n" + save_path + "\n\n")
         cv2.imwrite(save_path, image)
         # print(f"Saved: {save_path} (Object: {object_detected}, Text: {text_detected})")
 
@@ -641,9 +667,14 @@ def t_lsb(output_dir):
                 # Try to extract hidden message
                 try:
                     hidden_message = lsb.reveal(converted_file)
+                    lsb_dir = os.path.join(results_folder, "lsb")
+                    os.makedirs(lsb_dir, exist_ok=True)
+
+                    shutil.copy(converted_file, f"{lsb_dir}/{filename}")
                     # print("Hidden message detected:", hidden_message)
                 except Exception as e:
-                    print(e)
+                    pass
+                    # print(e)
 
     # print("lsb")
 
@@ -661,7 +692,8 @@ def image_integrity(output_dir):
                 # Check if the file is actually an image
                 image_type = imghdr.what(image_path)
                 if image_type:
-                    print(f"Image type detected: {image_type}")
+                    pass
+                    # print(f"Image type detected: {image_type}")
                 else:
                     pass
                     # print("File is not a valid image.")
@@ -672,7 +704,11 @@ def image_integrity(output_dir):
                         img.verify()  # Verifies if the file is corrupted
                         # print("Image structure is intact")
                 except Exception as e:
-                    print("Image might be altered:", e)
+                    image_integrity_dir = os.path.join(results_folder, "image_integrity")
+                    os.makedirs(image_integrity_dir, exist_ok=True)
+
+                    shutil.copy(image_path, f"{image_integrity_dir}/{filename}")
+                    # print("Image might be altered:", e)
 
         jpg_dir = os.path.join(output_dir, "jpg")
         if os.path.isdir(jpg_dir):
@@ -686,7 +722,8 @@ def image_integrity(output_dir):
                     # Check if the file is actually an image
                     image_type = imghdr.what(image_path)
                     if image_type:
-                        print(f"Image type detected: {image_type}")
+                        pass
+                        # print(f"Image type detected: {image_type}")
                     else:
                         pass
                         # print("File is not a valid image.")
@@ -697,7 +734,11 @@ def image_integrity(output_dir):
                             img.verify()  # Verifies if the file is corrupted
                             # print("Image structure is intact")
                     except Exception as e:
-                        print("Image might be altered:", e)
+                        image_integrity_dir = os.path.join(results_folder, "image_integrity")
+                        os.makedirs(image_integrity_dir, exist_ok=True)
+
+                        shutil.copy(image_path, f"{image_integrity_dir}/{filename}")
+                        # print("Image might be altered:", e)
 
     # print("image_integrity")
 
@@ -715,7 +756,7 @@ def object_detection(output_dir):
                 original_image = cv2.imread(image_path)
 
                 # Step 1: Run detection on the original image
-                process_and_save(original_image.copy(), "original")
+                process_and_save(original_image.copy(), "{filename}_original")
 
                 # Step 2: Isolate RGB channels and run detection on each
                 rgb_channels = ['red', 'green', 'blue']
@@ -723,12 +764,12 @@ def object_detection(output_dir):
                     isolated_image = np.zeros_like(original_image)
                     isolated_image[:, :, i] = original_image[:, :, i]  # Keep only one channel active
 
-                    process_and_save(isolated_image, f"{color}_only")
+                    process_and_save(isolated_image, f"{filename}_{color}_only")
 
                 # Step 3: Iterate over LSB removals (1 to 8 bits) and run detection
                 for bits in range(1, 9):  # Extract 1-bit to 8-bit LSBs
                     lsb_image = extract_lsb_and_normalize(original_image, bits)
-                    process_and_save(lsb_image, f"lsb_{bits}_bits_normalized")
+                    process_and_save(lsb_image, f"{filename}_lsb_{bits}_bits_normalized")
 
                 # cv2.destroyAllWindows()
 
@@ -743,7 +784,7 @@ def object_detection(output_dir):
                 original_image = cv2.imread(image_path)
 
                 # Step 1: Run detection on the original image
-                process_and_save(original_image.copy(), "original")
+                process_and_save(original_image.copy(), "{filename}_original")
 
                 # Step 2: Isolate RGB channels and run detection on each
                 rgb_channels = ['red', 'green', 'blue']
@@ -751,17 +792,20 @@ def object_detection(output_dir):
                     isolated_image = np.zeros_like(original_image)
                     isolated_image[:, :, i] = original_image[:, :, i]  # Keep only one channel active
 
-                    process_and_save(isolated_image, f"{color}_only")
+                    process_and_save(isolated_image, f"{filename}_{color}_only")
 
                 # Step 3: Iterate over LSB removals (1 to 8 bits) and run detection
                 for bits in range(1, 9):  # Extract 1-bit to 8-bit LSBs
                     lsb_image = extract_lsb_and_normalize(original_image, bits)
-                    process_and_save(lsb_image, f"lsb_{bits}_bits_normalized")
+                    process_and_save(lsb_image, f"{filename}_lsb_{bits}_bits_normalized")
 
                 # cv2.destroyAllWindows()
 
 
 def hist(output_dir):  # will need to automate this
+    hist_dir = os.path.join(results_folder, "hist")
+    os.makedirs(hist_dir, exist_ok=True)
+
     png_dir = os.path.join(output_dir, "png")
     if os.path.isdir(png_dir):
         for filename in os.listdir(png_dir):
@@ -774,7 +818,9 @@ def hist(output_dir):  # will need to automate this
 
                 plt.hist(image.ravel(), bins=256, range=[0, 256])
                 plt.title("Histogram of Pixel Intensities")
-                plt.show()  # need to just save the hist for later inspection, make a hist folder and then save them there
+                # Save the histogram as a PNG file
+                plt.savefig(f"{hist_dir}/{filename}_histogram.png")
+                # plt.show()  # need to just save the hist for later inspection, make a hist folder and then save them there
 
     jpg_dir = os.path.join(output_dir, "jpg")
     if os.path.isdir(jpg_dir):
@@ -788,7 +834,9 @@ def hist(output_dir):  # will need to automate this
 
                 plt.hist(image.ravel(), bins=256, range=[0, 256])
                 plt.title("Histogram of Pixel Intensities")
-                plt.show()
+                # Save the histogram as a PNG file
+                plt.savefig(f"{hist_dir}/{filename}_histogram.png")
+                # plt.show()
 
     # print("hist")
 
@@ -804,11 +852,15 @@ def jpeg(output_dir):
                 image_path = f
                 """Run stegdetect in WSL silently and capture output."""
                 wsl_image_path = image_path.replace("C:\\", "/mnt/c/").replace("\\", "/").lower()
-                result = run_silent_command(f"stegdetect -t o {wsl_image_path}")
+                result = run_silent_command(f"stegdetect -t o {image_path}")
 
                 # Only print results if stegdetect finds something
                 if result:
-                    print("Stegdetect Output:\n", result)
+                    jpeg_dir = os.path.join(results_folder, "jpeg")
+                    os.makedirs(jpeg_dir, exist_ok=True)
+
+                    shutil.copy(image_path, f"{jpeg_dir}/{filename}")
+                    # print("Stegdetect Output:\n", result)
 
     # print("jpeg")
 
@@ -824,11 +876,15 @@ def png(output_dir):
                 # print(f)
                 image_path = f
                 """Run zsteg in WSL silently and capture output."""
-                # wsl_image_path = image_path.replace("C:\\", "/mnt/c/").replace("\\", "/").lower()
+                wsl_image_path = image_path.replace("C:\\", "/mnt/c/").replace("\\", "/").lower()
                 result = run_silent_command(f"zsteg -a {image_path}")
 
                 if result:
-                    print("Zsteg Output:\n", result)
+                    png_dir = os.path.join(results_folder, "png")
+                    os.makedirs(png_dir, exist_ok=True)
+
+                    shutil.copy(image_path, f"{png_dir}/{filename}")
+                    # print("Zsteg Output:\n", result)
 
     # print("png")
 
@@ -884,7 +940,11 @@ def binary(output_dir):
                 result = run_silent_command(f"binwalk {wsl_file_path}")
 
                 if result:
-                    print("Binwalk Output:\n", result)
+                    binary_dir = os.path.join(results_folder, "binary")
+                    os.makedirs(binary_dir, exist_ok=True)
+
+                    shutil.copy(image_path, f"{binary_dir}/{filename}")
+                    #print("Binwalk Output:\n", result)
 
     # print("binary")
 
@@ -902,17 +962,23 @@ def elf_check(output_dir):
             )
 
             if is_elf:
-                print(f"[+] {file_path} is an ELF file.")
+                elf_dir = os.path.join(results_folder, "elf")
+                os.makedirs(elf_dir, exist_ok=True)
+
+                shutil.copy(image_path, f"{elf_dir}/{filename}")
+                #print(f"[+] {file_path} is an ELF file.")
 
                 # Check for suspicious traits
                 if is_suspicious_elf(file_path):
-                    print(f"[!] WARNING: {file_path} may contain suspicious traits (packed, obfuscated, or malicious).")
+                    pass
+                    #print(f"[!] WARNING: {file_path} may contain suspicious traits (packed, obfuscated, or malicious).")
 
                 # Check entropy for potential obfuscation
                 entropy = calculate_entropy(file_path)
-                print(f"[*] File entropy: {entropy:.2f}")
+                #print(f"[*] File entropy: {entropy:.2f}")
                 if entropy > 7.5:
-                    print("[!] High entropy detected – possible packing or encryption.")
+                    pass
+                    #print("[!] High entropy detected – possible packing or encryption.")
             else:
                 pass
                 # print(f"[-] {file_path} is NOT an ELF file.")
@@ -995,17 +1061,18 @@ def main():
         if os.path.exists(pdf_dir) or os.path.exists(docx_dir):
             # if "pdf" in file_types or "docx" in file_types:
             # print("IN TYPES CHECK")
-            extract_from_file(output_dir)  # THIS IS JUST SAVING EACH PAGES AS A PICTURE THAT IS DOING ME NO GOOD
+            pass
+            # extract_from_file(output_dir)  # THIS IS JUST SAVING EACH PAGES AS A PICTURE THAT IS DOING ME NO GOOD
 
         process_images(output_dir)
 
         # Generate a unique folder name using the current timestamp
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        results_folder = f"results_{timestamp}"
+        results_folder_tmp = f"results_{timestamp}"
 
         # Create the unique results folder if it doesn't exist
-        results_dir = os.path.join(output_dir, results_folder)
-        os.makedirs(results_dir, exist_ok=True)
+        results_folder = os.path.join(output_dir, results_folder_tmp)
+        os.makedirs(results_folder, exist_ok=True)
 
         all_test = args.mode == "all"
         test_modes = [] if all_test else args.mode.lower().split(',')
@@ -1014,7 +1081,7 @@ def main():
         mode_actions = {
             "lsb": lambda: t_lsb(output_dir),
             "image_integrity": lambda: image_integrity(output_dir),
-            # "hist": lambda: hist(output_dir),
+            "hist": lambda: hist(output_dir),
             "object_detection": lambda: object_detection(output_dir),
             "jpeg": lambda: jpeg(output_dir),
             "png": lambda: png(output_dir),
@@ -1045,8 +1112,7 @@ if __name__ == "__main__":
     # sudo python stegoScan.py -l "downloads" -t "*" -n 1 -o "downloads" -m "all,png"
     # python cl_test.py -u "https://en.wikipedia.org/wiki/Steganography" -t "*" -o "downloads" -m "all,png"
 
-    # add more tools, work on some sort of detection (like byte pattern, yara rules), check for pe files or elf files for liunx, clean up the outputs by saving each line that has text to a file, save download history to a txt, scan your own google drive?, make it more of a crawler/spider (provide options),
+    # add more tools,  save download history to a txt, scan your own google drive?, make it more of a crawler/spider (provide options),
 
-    # try doing yolo check on the iteration of lsb images to see if that will detect pictures? Could replace the hist
 
     main()
