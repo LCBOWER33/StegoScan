@@ -33,7 +33,7 @@ StegoScan.py is a Python script designed for automated website and local stegano
 1. LSB Steganography
 
 <p align="center">
-  <img src="images/demo.gif" width="700" height="400" >
+  <img src="images/detection_results.gif" width="700" height="400" >
 </p>
 
 2. ...
