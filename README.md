@@ -1,6 +1,6 @@
 # StegoScan
 
-Overview
+## Overview
 
 StegoScan.py is a Python script designed for automated website and local steganography detection and basic malware scanning. It supports common file types like png, jpg, bin, pdf, docx, wav, and mp3. It utilizes advanced AI models such as YOLO and TrOCR for object and text detection of potentially embeded images/messages. The script is optimized for Linux and will install necessary dependencies automatically.
 
