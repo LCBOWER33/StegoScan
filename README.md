@@ -28,6 +28,16 @@ StegoScan.py is a Python script designed for automated website and local stegano
 
 * Multi-threading Support: Improves performance for large-scale file processing.
 
+# Test
+
+1. LSB Steganography
+
+<p align="center">
+  <img src="images/demo.gif" width="700" height="400" >
+</p>
+
+2. ...
+
 # Installation
 
 ## Clone the repository
