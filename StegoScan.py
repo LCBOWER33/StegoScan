@@ -110,6 +110,7 @@ import transformers
 # Suppress warnings
 warnings.simplefilter("ignore", category=DeprecationWarning)
 warnings.simplefilter("ignore", category=RuntimeWarning)
+warnings.filterwarnings("ignore", category=UserWarning, module='torch')
 
 # Suppress logging from models
 transformers.logging.set_verbosity_error()
@@ -409,25 +410,41 @@ def download_from_source(source, file_types, limit, all_files, output_dir):
         download_file(file_url, output_dir)
 
 
-def extract_images_from_pdf(pdf_path, output_dir, dpi=100):
-    os.makedirs(output_dir, exist_ok=True)
+def extract_images_from_pdf(pdf_path, output_folder):
+    """
+    Extracts embedded images from a PDF and saves them as separate image files.
 
-    # Get total number of pages
-    try:
-        with open(pdf_path, "rb") as f:
-            pdf_reader = PdfReader(f)
-            total_pages = len(pdf_reader.pages)
+    :param pdf_path: Path to the input PDF file
+    :param output_folder: Folder to save extracted images
+    """
+    # Ensure output directory exists
+    os.makedirs(output_folder, exist_ok=True)
 
-        # print(f"Processing {total_pages} pages from {pdf_path}...")
+    # Open the PDF file
+    doc = fitz.open(pdf_path)
 
-        for page_num in range(1, total_pages + 1):  # Loop through all pages
-            images = convert_from_path(pdf_path, dpi=dpi, first_page=page_num, last_page=page_num)
-            for i, image in enumerate(images):
-                image_path = os.path.join(output_dir, f'image_{page_num}_{i}.png')
-                image.save(image_path, 'PNG')
-            # print(f"Extracted images from page {page_num}")
-    except Exception as e:
-        print(f"Error extracting images: {e}")
+    image_count = 0
+
+    for page_number in range(len(doc)):
+        page = doc[page_number]
+        images = page.get_images(full=True)
+
+        for img_index, img in enumerate(images):
+            xref = img[0]  # Image XREF
+            base_image = doc.extract_image(xref)
+
+            image_bytes = base_image["image"]
+            image_ext = base_image["ext"]
+            image_filename = f"image_{page_number + 1}_{img_index + 1}.{image_ext}"
+            image_path = os.path.join(output_folder, image_filename)
+
+            with open(image_path, "wb") as image_file:
+                image_file.write(image_bytes)
+
+            image_count += 1
+            print(f"Extracted: {image_path}")
+
+    print(f"Total images extracted: {image_count}")
 
 
 def extract_images_from_docx(docx_path, output_dir):
@@ -945,10 +962,10 @@ def audio_integrity(
                     new_filename = f"{base_name}.txt"
 
                     f = open(f"{audio_integrity_dir}/{new_filename}", "w")
-                    f.write(f"Number of Channels: {wav_file.getnchannels()}")
-                    f.write(f"Frame Rate: {wav_file.getframerate()}")
-                    f.write(f"Sample Width: {wav_file.getsampwidth()}")
-                    f.write(f"Number of Frames: {wav_file.getnframes()}")
+                    f.write(f"Number of Channels: {wav_file.getnchannels()}\n")
+                    f.write(f"Frame Rate: {wav_file.getframerate()}\n")
+                    f.write(f"Sample Width: {wav_file.getsampwidth()}\n")
+                    f.write(f"Number of Frames: {wav_file.getnframes()}\n")
                     f.close()
 
                     # print("audio")
@@ -998,7 +1015,7 @@ def audio_dectection(output_dir):
                         audio_dectection_dir = os.path.join(results_folder, "audio_dectection")
                         os.makedirs(audio_dectection_dir, exist_ok=True)
 
-                        shutil.copy(spectrogram_path, f"{audio_dectection_dir}/{base_name}_spectrogram.png")
+                        shutil.copy(spectrogram_path, f"{audio_dectection_dir}/{base_name}_spectrogram.png")  # this needs to be tested further
 
                 # Step 5: Run OCR on spectrogram (both handwritten and printed models)
                 image = Image.open(spectrogram_path).convert("RGB")
@@ -1074,9 +1091,12 @@ def elf_check(output_dir):
                 # Check entropy for potential obfuscation
                 entropy = calculate_entropy(file_path)
                 # print(f"[*] File entropy: {entropy:.2f}")
-                if entropy > 7.5:
+                if entropy > 7:
                     pass
                     # print("[!] High entropy detected – possible packing or encryption.")
+                elif entropy > 7.5:
+                    pass
+                    # print("very high")
             else:
                 pass
                 # print(f"[-] {file_path} is NOT an ELF file.")
@@ -1159,8 +1179,7 @@ def main():
         if os.path.exists(pdf_dir) or os.path.exists(docx_dir):
             # if "pdf" in file_types or "docx" in file_types:
             # print("IN TYPES CHECK")
-            pass
-            # extract_from_file(output_dir)  # THIS IS JUST SAVING EACH PAGES AS A PICTURE THAT IS DOING ME NO GOOD
+            extract_from_file(output_dir)  # THIS IS JUST SAVING EACH PAGES AS A PICTURE THAT IS DOING ME NO GOOD
 
         process_images(output_dir)
 
@@ -1192,25 +1211,33 @@ def main():
         if "all" in test_modes:
             # print("we are in all")
             # Run all tests once and exit
-            for action in mode_actions.values():
+            for action in tqdm(mode_actions.values()):
                 action()
             return
-
-        for mode in test_modes:
-            action = mode_actions.get(mode)
-            if action:
-                action()
-            else:
-                print(f"INVALID TEST MODE: {mode}")
+        else:
+            for mode in tqdm(test_modes):
+                action = mode_actions.get(mode)
+                if action:
+                     action()
+                else:
+                    print(f"INVALID TEST MODE: {mode}")
 
     # print("done")
 
 
 if __name__ == "__main__":
-    # python cl_test.py -u "https://www.uah.edu" -t "pdf,jpg,png" -n 1 -o "downloads" -m "all"
+    # python stegoScan.py -u "https://www.uah.edu" -t "pdf,jpg,png" -n 1 -o "downloads" -m "all"
     # sudo python stegoScan.py -l "downloads" -t "*" -n 1 -o "downloads" -m "all"
-    # python cl_test.py -u "https://en.wikipedia.org/wiki/Steganography" -t "*" -o "downloads" -m "all"
+    # python stegoScan.py -u "https://en.wikipedia.org/wiki/Steganography" -t "*" -o "downloads" -m "all"
 
     # add more tools, save download history to a txt, scan your own google drive?, make it more of a crawler/spider (provide options), add tqdm to show test progress
+    
+    # try doing the language detection in chatGPT or aws
+    
+    # add in an output for detections and not etc for each test
 
+    # add in levels of verbosity 
+    
+    # higlight novel aspects
+    
     main()
