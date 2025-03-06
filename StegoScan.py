@@ -24,6 +24,7 @@ required_packages = {
     "ultralytics": "ultralytics",
     "PyPDF2": "PyPDF2",
     "yara": "yara-python",  # YARA for malware analysis
+    "librosa": "librosa",
 }
 
 
@@ -101,7 +102,6 @@ install_linux_dependencies()
 configure_windows_poppler()
 install_missing_packages()
 
-
 import warnings
 import logging
 import sys
@@ -119,7 +119,6 @@ logging.getLogger("ultralytics").setLevel(logging.ERROR)
 
 # Optional: Redirect stderr to suppress all warnings (use with caution)
 sys.stderr = open(os.devnull, "w")
-
 
 import argparse
 import requests
@@ -151,6 +150,8 @@ from ultralytics import YOLO
 from datetime import datetime
 from collections import Counter
 import yara
+import librosa
+import librosa.display
 
 # TODO: Check if there are any arguments and if not load the GUI that will execute the proper code
 
@@ -165,11 +166,14 @@ model = YOLO("yolov8l.pt").to(device)  # Use 'yolov8s.pt' for a smaller, faster 
 model.overrides['verbose'] = False  # Suppress model output
 
 # Load the pre-trained TrOCR model and processor
-processor = TrOCRProcessor.from_pretrained("microsoft/trocr-base-handwritten")
-model_trocr = VisionEncoderDecoderModel.from_pretrained("microsoft/trocr-base-handwritten")
+processor_handwritten = TrOCRProcessor.from_pretrained("microsoft/trocr-base-handwritten")
+model_handwritten = VisionEncoderDecoderModel.from_pretrained("microsoft/trocr-base-handwritten")
+
+processor_printed = TrOCRProcessor.from_pretrained("microsoft/trocr-base-printed")
+model_printed = VisionEncoderDecoderModel.from_pretrained("microsoft/trocr-base-printed")
 
 # Ensure the model is on GPU if available
-model_trocr = model_trocr.to(device)
+# model_trocr = model_trocr.to(device)
 
 # Define YARA rules to detect ELF files and potential malware traits
 YARA_RULES = """
@@ -509,6 +513,22 @@ def process_images(output_dir):
                 # print(f"Converted {filename} to {out_file}")
 
 
+def is_meaningful_text(text):
+    """Check if extracted text is meaningful (not gibberish)."""
+    if not text or len(text) < 2:  # Ignore empty or single-character text
+        return False
+    # Allow only words with letters, numbers, or common symbols
+    return bool(re.search(r"[a-zA-Z0-9]", text))
+
+
+def extract_text(image, processor, model):
+    """Run OCR and return meaningful extracted text."""
+    pixel_values = processor(image, return_tensors="pt").pixel_values
+    generated_ids = model.generate(pixel_values)
+    extracted_text = processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
+    return extracted_text if is_meaningful_text(extracted_text) else None
+
+
 def detect_objects(image):
     """Runs YOLO model on the image and returns True if an object is detected."""
     results = model(image)
@@ -542,11 +562,11 @@ def detect_text(image):
     pil_image = Image.fromarray(preprocessed_img).convert("RGB")
 
     # Get pixel values for model input
-    pixel_values = processor(images=pil_image, return_tensors="pt").pixel_values.to(device)
+    pixel_values = processor_handwritten(images=pil_image, return_tensors="pt").pixel_values.to(device)
 
     # Perform OCR prediction
-    generated_ids = model_trocr.generate(pixel_values)
-    transcription = processor.decode(generated_ids[0], skip_special_tokens=True).strip()
+    generated_ids = model_handwritten.generate(pixel_values)
+    transcription = processor_handwritten.decode(generated_ids[0], skip_special_tokens=True).strip()
 
     # Apply filtering: Ignore results if text length is too short or contains mostly non-alphanumeric characters
     if len(transcription) < 3 or sum(c.isalnum() for c in transcription) / len(transcription) < 0.5:
@@ -756,7 +776,7 @@ def object_detection(output_dir):
                 original_image = cv2.imread(image_path)
 
                 # Step 1: Run detection on the original image
-                process_and_save(original_image.copy(), "{filename}_original")
+                process_and_save(original_image.copy(), f"{filename}_original")
 
                 # Step 2: Isolate RGB channels and run detection on each
                 rgb_channels = ['red', 'green', 'blue']
@@ -784,7 +804,7 @@ def object_detection(output_dir):
                 original_image = cv2.imread(image_path)
 
                 # Step 1: Run detection on the original image
-                process_and_save(original_image.copy(), "{filename}_original")
+                process_and_save(original_image.copy(), f"{filename}_original")
 
                 # Step 2: Isolate RGB channels and run detection on each
                 rgb_channels = ['red', 'green', 'blue']
@@ -889,7 +909,8 @@ def png(output_dir):
     # print("png")
 
 
-def audio(output_dir):  # needs to be cleaned up
+def audio_integrity(
+        output_dir):  # This is checking integrity need to add one from main machine that runs ai aginst it too
     # files
     mp3_dir = os.path.join(output_dir, "mp3")
     wav_dir = os.path.join(output_dir, "wav")
@@ -917,12 +938,89 @@ def audio(output_dir):  # needs to be cleaned up
                 audio_path = f
 
                 with wave.open(audio_path, "rb") as wav_file:
-                    print(f"Number of Channels: {wav_file.getnchannels()}")
-                    print(f"Frame Rate: {wav_file.getframerate()}")
-                    print(f"Sample Width: {wav_file.getsampwidth()}")
-                    print(f"Number of Frames: {wav_file.getnframes()}")
+                    audio_integrity_dir = os.path.join(results_folder, "audio_integrity")
+                    os.makedirs(audio_integrity_dir, exist_ok=True)
 
-    # print("audio")
+                    base_name, _ = os.path.splitext(filename)
+                    new_filename = f"{base_name}.txt"
+
+                    f = open(f"{audio_integrity_dir}/{new_filename}", "w")
+                    f.write(f"Number of Channels: {wav_file.getnchannels()}")
+                    f.write(f"Frame Rate: {wav_file.getframerate()}")
+                    f.write(f"Sample Width: {wav_file.getsampwidth()}")
+                    f.write(f"Number of Frames: {wav_file.getnframes()}")
+                    f.close()
+
+                    # print("audio")
+
+
+def audio_dectection(output_dir):
+    mp3_dir = os.path.join(output_dir, "mp3")
+    wav_dir = os.path.join(output_dir, "wav")
+    if os.path.isdir(mp3_dir):
+        for filename in os.listdir(mp3_dir):
+            f = os.path.join(mp3_dir, filename)
+            # checking if it is a file
+            if os.path.isfile(f):
+                # print(f)
+                src = f
+                file_name = os.path.basename(f)
+                file = os.path.splitext(file_name)
+                dst = os.path.join(wav_dir, file[0] + ".wav")
+
+                # convert wav to mp3
+                sound = AudioSegment.from_mp3(src)
+                sound.export(dst, format="wav")
+
+    if os.path.isdir(wav_dir):
+        for filename in os.listdir(wav_dir):
+            f = os.path.join(wav_dir, filename)
+            # checking if it is a file
+            if os.path.isfile(f):
+                # print(f)
+                audio_path = f
+                # Step 1: Load the audio file and generate spectrogram
+                y, sr = librosa.load(audio_path, sr=None)
+                D = librosa.amplitude_to_db(np.abs(librosa.stft(y)), ref=np.max)
+
+                # Step 2: Save spectrogram as a high-resolution image (no display)
+                base_name, _ = os.path.splitext(filename)
+                spectrogram_path = f"{base_name}_spectrogram.png"  # Need to change this
+                librosa.display.specshow(D, sr=sr, x_axis="time", y_axis="log")
+                plt.axis("off")
+                plt.savefig(spectrogram_path)
+                plt.close()
+
+                # Step 3: Run YOLOv8 detection (silent execution)
+                results = model(spectrogram_path)
+                for result in results:
+                    if len(result.boxes) > 0:
+                        audio_dectection_dir = os.path.join(results_folder, "audio_dectection")
+                        os.makedirs(audio_dectection_dir, exist_ok=True)
+
+                        shutil.copy(spectrogram_path, f"{audio_dectection_dir}/{base_name}_spectrogram.png")
+
+                # Step 5: Run OCR on spectrogram (both handwritten and printed models)
+                image = Image.open(spectrogram_path).convert("RGB")
+
+                # Extract and filter text
+                text_handwritten = extract_text(image, processor_handwritten, model_handwritten)
+                text_printed = extract_text(image, processor_printed, model_printed)
+
+                # Step 6: Print meaningful results only, Need to save this here
+                if text_handwritten:
+                    audio_dectection_dir = os.path.join(results_folder, "audio_dectection")
+                    os.makedirs(audio_dectection_dir, exist_ok=True)
+
+                    shutil.copy(spectrogram_path, f"{audio_dectection_dir}/{base_name}_spectrogram.png")
+                    # print("Extracted Handwritten Text:", text_handwritten)
+
+                if text_printed:
+                    audio_dectection_dir = os.path.join(results_folder, "audio_dectection")
+                    os.makedirs(audio_dectection_dir, exist_ok=True)
+
+                    shutil.copy(spectrogram_path, f"{audio_dectection_dir}/{base_name}_spectrogram.png")
+                    # print("Extracted Printed Text:", text_printed)
 
 
 def binary(output_dir):
@@ -944,7 +1042,7 @@ def binary(output_dir):
                     os.makedirs(binary_dir, exist_ok=True)
 
                     shutil.copy(image_path, f"{binary_dir}/{filename}")
-                    #print("Binwalk Output:\n", result)
+                    # print("Binwalk Output:\n", result)
 
     # print("binary")
 
@@ -966,19 +1064,19 @@ def elf_check(output_dir):
                 os.makedirs(elf_dir, exist_ok=True)
 
                 shutil.copy(image_path, f"{elf_dir}/{filename}")
-                #print(f"[+] {file_path} is an ELF file.")
+                # print(f"[+] {file_path} is an ELF file.")
 
                 # Check for suspicious traits
                 if is_suspicious_elf(file_path):
                     pass
-                    #print(f"[!] WARNING: {file_path} may contain suspicious traits (packed, obfuscated, or malicious).")
+                    # print(f"[!] WARNING: {file_path} may contain suspicious traits (packed, obfuscated, or malicious).")
 
                 # Check entropy for potential obfuscation
                 entropy = calculate_entropy(file_path)
-                #print(f"[*] File entropy: {entropy:.2f}")
+                # print(f"[*] File entropy: {entropy:.2f}")
                 if entropy > 7.5:
                     pass
-                    #print("[!] High entropy detected – possible packing or encryption.")
+                    # print("[!] High entropy detected – possible packing or encryption.")
             else:
                 pass
                 # print(f"[-] {file_path} is NOT an ELF file.")
@@ -1075,7 +1173,7 @@ def main():
         os.makedirs(results_folder, exist_ok=True)
 
         all_test = args.mode == "all"
-        test_modes = [] if all_test else args.mode.lower().split(',')
+        test_modes = "all" if all_test else args.mode.lower().split(',')
 
         # Mapping test modes to their respective functions
         mode_actions = {
@@ -1085,12 +1183,13 @@ def main():
             "object_detection": lambda: object_detection(output_dir),
             "jpeg": lambda: jpeg(output_dir),
             "png": lambda: png(output_dir),
-            "audio": lambda: audio(output_dir),
+            "audio_integrity": lambda: audio_integrity(output_dir),
+            "audio_dectection": lambda: audio_dectection(output_dir),
             "binary": lambda: binary(output_dir),
             "elf_check": lambda: elf_check(output_dir),
         }
 
-        if "all" in test_modes:  # for some reason we have to specify more than one to get here
+        if "all" in test_modes:
             # print("we are in all")
             # Run all tests once and exit
             for action in mode_actions.values():
@@ -1108,11 +1207,10 @@ def main():
 
 
 if __name__ == "__main__":
-    # python cl_test.py -u "https://www.uah.edu" -t "pdf,jpg,png" -n 1 -o "downloads" -m "all,png"
-    # sudo python stegoScan.py -l "downloads" -t "*" -n 1 -o "downloads" -m "all,png"
-    # python cl_test.py -u "https://en.wikipedia.org/wiki/Steganography" -t "*" -o "downloads" -m "all,png"
+    # python cl_test.py -u "https://www.uah.edu" -t "pdf,jpg,png" -n 1 -o "downloads" -m "all"
+    # sudo python stegoScan.py -l "downloads" -t "*" -n 1 -o "downloads" -m "all"
+    # python cl_test.py -u "https://en.wikipedia.org/wiki/Steganography" -t "*" -o "downloads" -m "all"
 
-    # add more tools,  save download history to a txt, scan your own google drive?, make it more of a crawler/spider (provide options),
-
+    # add more tools, save download history to a txt, scan your own google drive?, make it more of a crawler/spider (provide options), add tqdm to show test progress
 
     main()
