@@ -2,13 +2,21 @@
 
 ## Overview
 
-StegoScan.py is a Python script designed for automated website and local steganography detection and basic malware scanning. It supports common file types like png, jpg, bin, pdf, docx, wav, and mp3. It utilizes advanced AI models such as YOLO and TrOCR for object and text detection of potentially embeded images/messages. The script is optimized for Linux and will install necessary dependencies automatically.
+StegoScan.py is a Python script designed for automated website and local steganography detection with basic malware scanning. It supports common file types like png, jpg, bin, pdf, docx, wav, and mp3. It utilizes advanced AI models such as YOLO and TrOCR for object and text detection of potentially embeded images/messages. The script is optimized for Linux and will install necessary dependencies automatically. Whether StegoScan is given an IP address, IP range, webaddress, and or local directory it will ensure its targeting a webserver or directory and scrape then disect appropriate files to feed them into a steganography test suite designed to uncover hidden public communication. 
+
+Steganography being the practice of hiding messages within other non-suspicious data—has seen a notable increase in utilization within criminal activities. Advancements in digital technologies have enabled malicious actors to embed illicit information within seemingly innocuous files such as images, audio, or video. For example, there have been reports suggesting that terrorist organizations have used steganography to conceal instructions within digital photographs posted on the internet. Additionally, the rise of Voice over Internet Protocol (VoIP) communications has led to the development of techniques that hide data within voice streams, making detection even more challenging. 
+
+In the realm of public media, steganography has also made its presence felt. Beyond its malicious uses, it has been employed for legitimate purposes such as digital watermarking, where copyright information is covertly embedded into media files to protect intellectual property rights. This technique allows content creators to trace the distribution of their work and combat unauthorized usage. Furthermore, the concept of social steganography has emerged, where individuals hide messages within cultural references, idioms, or pop culture content shared publicly, making the underlying messages visible only to certain audiences.
+
+Given the increasing use of steganography in cybercrime, terrorism, and covert communications, it is crucial to develop tools that can scan websites for these hidden messages. Criminals and malicious actors exploit digital steganography to secretly exchange data, such as stolen credentials, malware commands, or illicit instructions, all while avoiding detection by traditional cybersecurity measures. Without the ability to scan and analyze web content for embedded messages, law enforcement and security agencies may struggle to track illegal activities, leading to potential threats to national security, financial systems, and personal privacy. Additionally, with the rise of misinformation and covert influence campaigns, steganographic techniques could be leveraged to spread hidden propaganda or coordinate disinformation efforts. Implementing scanning mechanisms would help identify and mitigate these risks while balancing privacy concerns, ensuring that steganography is not misused for nefarious purposes.
 
 ## Features
 
-* Web Scraping & File Downloading: Extracts and downloads specific file types from URLs.
+* Web scraping and file downloading to extract and download specific file types from URLs, IP addresses and ranges.
 
-* Image Processing & Steganography Analysis:
+* Local directory extraction and testing.
+
+* Image processing and steganography analysis.
 
 * Extracts images from PDFs and DOCX files.
 
@@ -18,11 +26,11 @@ StegoScan.py is a Python script designed for automated website and local stegano
 
 * Uses YOLOv8 for object detection.
 
-* Uses TrOCR for handwriting recognition.
+* Uses TrOCR for handwriting and digital writing recognition.
 
-* Basic Malware & ELF File Analysis:
+* Basic Malware & ELF File Analysis.
 
-* Audio & Binary File Analysis:
+* Audio & Binary File Analysis.
 
 * Uses binwalk for binary file structure extraction.
 
