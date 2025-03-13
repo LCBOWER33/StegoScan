@@ -106,7 +106,7 @@ The script installs poppler-utils, stegdetect, binwalk, and zsteg automatically.
 
 GPU acceleration is used if a CUDA-compatible GPU is detected.
 
-# Future Enhancements - Anticipated competion date: May 2025
+# Future Enhancements - Anticipated completion date: May 2025
 
 Create GUI implentation if no commandline arguments are supplied. 
 
