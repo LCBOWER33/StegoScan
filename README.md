@@ -114,7 +114,7 @@ Expand malware analysis with more YARA rules.
 
 Improve object detection using advanced image processing techniques.
 
-Automate Google Drive scanning and crawling functionalities.
+Expand to Google Drive scanning.
 
 # License
 
