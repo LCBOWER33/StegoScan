@@ -72,7 +72,7 @@ Given the increasing use of steganography in cybercrime, terrorism, and covert c
 
 ## Basic Usage
 
-sudo python cl_test.py -u "https://example.com" -t "*" -o "downloads" -m "all"
+sudo python StegoScan.py -u "https://example.com" -t "*" -o "downloads" -m "all"
 
 # Arguments:
 
@@ -91,10 +91,10 @@ sudo python cl_test.py -u "https://example.com" -t "*" -o "downloads" -m "all"
 # Example Commands
 
 ## Download files from a URL
-sudo python cl_test.py -u "https://example.com" -t "jpg,png" -n 5 -o "downloads" -m "all"
+sudo python StegoScan.py -u "https://example.com" -t "jpg,png" -n 5 -o "downloads" -m "all"
 
 ## Analyze a local directory
-sudo python cl_test.py -l "path/to/local/files" -t "*" -o "downloads" -m "lsb,hist,png"
+sudo python StegoScan.py -l "path/to/local/files" -t "*" -o "downloads" -m "lsb,hist,png"
 
 # Notes
 
