@@ -10,6 +10,10 @@ In the realm of public media, steganography has also made its presence felt. Bey
 
 Given the increasing use of steganography in cybercrime, terrorism, and covert communications, it is crucial to develop tools that can scan websites for these hidden messages. Criminals and malicious actors exploit digital steganography to secretly exchange data, such as stolen credentials, malware commands, or illicit instructions, all while avoiding detection by traditional cybersecurity measures. Without the ability to scan and analyze web content for embedded messages, law enforcement and security agencies may struggle to track illegal activities, leading to potential threats to national security, financial systems, and personal privacy. Additionally, with the rise of misinformation and covert influence campaigns, steganographic techniques could be leveraged to spread hidden propaganda or coordinate disinformation efforts. Implementing scanning mechanisms would help identify and mitigate these risks while balancing privacy concerns, ensuring that steganography is not misused for nefarious purposes.
 
+## How StegoScan Works
+
+... 
+
 ## Features
 
 * Web scraping and file downloading to extract and download specific file types from URLs, IP addresses and ranges.
@@ -22,7 +26,7 @@ Given the increasing use of steganography in cybercrime, terrorism, and covert c
 
 * Detects steganographic messages in images using stegano, stegdetect, and zsteg.
 
-* Object Detection & Text Recognition for embeded images:
+* Object Detection & Text Recognition for embeded images.
 
 * Uses YOLOv8 for object detection.
 
@@ -62,22 +66,9 @@ Given the increasing use of steganography in cybercrime, terrorism, and covert c
 
 10. Elf check - Uses YARA rules, magic bytes, Linux file command, and entropy analysis to check all files for embeded malware.
 
-# Installation
-
-## Clone the repository
-git clone <repository-url>
-cd <repository-folder>
-
-## Run the script; it will automatically create a virtual environment and install dependencies
-python cl_test.py
-
-# Usage
-
-The script can be run with different arguments to perform various tasks.
-
 ## Basic Usage
 
-python cl_test.py -u "https://example.com" -t "pdf,jpg,png" -n 10 -o "downloads" -m "all"
+sudo python cl_test.py -u "https://example.com" -t "*" -o "downloads" -m "all"
 
 # Arguments:
 
@@ -89,59 +80,35 @@ python cl_test.py -u "https://example.com" -t "pdf,jpg,png" -n 10 -o "downloads"
 
 -o, --output : Output directory.
 
--m, --mode : Test mode to specify specific tests (e.g., lsb,hist) or all for all tests.
+-m, --mode : Test mode to specify specific tests (e.g., lsb,hist) or "all" for all tests.
 
 -l, --local : Path to a local file or directory for analysis.
 
 # Example Commands
 
 ## Download files from a URL
-python cl_test.py -u "https://example.com" -t "jpg,png" -n 5 -o "downloads"
+sudo python cl_test.py -u "https://example.com" -t "jpg,png" -n 5 -o "downloads" -m "all"
 
 ## Analyze a local directory
-python cl_test.py -l "path/to/local/files" -t "*" -o "downloads" -m "all"
-
-# Dependencies
-
-The script automatically installs required dependencies, including:
-
-requests
-
-beautifulsoup4
-
-pdf2image
-
-python-docx
-
-stegano
-
-pillow
-
-opencv-python
-
-numpy
-
-matplotlib
-
-tqdm
-
-torch
-
-transformers
-
-ultralytics
-
-PyPDF2
-
-yara-python
+sudo python cl_test.py -l "path/to/local/files" -t "*" -o "downloads" -m "lsb,hist,png"
 
 # Notes
 
-Linux users: The script installs poppler-utils, stegdetect, binwalk, and zsteg automatically.
+All scraped files will be stored in the output directory supplied in the execution.
+
+Automatically creates and installs new enviroment for all nessasary Python imports.
+
+The script installs poppler-utils, stegdetect, binwalk, and zsteg automatically.
 
 GPU acceleration is used if a CUDA-compatible GPU is detected.
 
-# Future Enhancements
+# Future Enhancements - Anticipated competion date: May 2025
+
+Create GUI implentation if no commandline arguments are supplied. 
+
+Expand test suite to include Strings, Exiftool, StegSeek, WavSteg, OpenPuff, and Stegcracker.
+
+Expand to a web crawler and allow for diffrent search depths. 
 
 Expand malware analysis with more YARA rules.
 
