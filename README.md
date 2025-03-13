@@ -14,7 +14,11 @@ Given the increasing use of steganography in cybercrime, terrorism, and covert c
 
 ... 
 
-## Features
+## Novel Features
+
+...
+
+## General Features
 
 * Web scraping and file downloading to extract and download specific file types from URLs, IP addresses and ranges.
 
