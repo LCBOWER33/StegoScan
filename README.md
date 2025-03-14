@@ -2,55 +2,59 @@
 
 ## Overview
 
-StegoScan.py is a Python script designed for automated website and local steganography detection with basic malware scanning. It supports common file types like png, jpg, bin, pdf, docx, wav, and mp3. It utilizes advanced AI models such as YOLO and TrOCR for object and text detection of potentially embeded images/messages. The script is optimized for Linux and will install necessary dependencies automatically. Whether StegoScan is given an IP address, IP range, webaddress, and or local directory it will ensure its targeting a webserver or directory and scrape then disect appropriate files to feed them into a steganography test suite designed to uncover hidden public communication. 
+StegoScan.py is a powerful, next-generation tool for automated steganography detection in websites, web servers, and local directories, integrating AI-driven object and text recognition with deep file analysis. Unlike traditional steganography detection tools that focus on a limited set of file types or require manual processing, StegoScan.py is designed for comprehensive, automated scanning—scraping websites, dissecting embedded files, and detecting hidden messages across a broad range of formats, including PNG, JPG, BIN, PDF, DOCX, WAV, and MP3.
 
-Steganography being the practice of hiding messages within other non-suspicious data—has seen a notable increase in utilization within criminal activities. Advancements in digital technologies have enabled malicious actors to embed illicit information within seemingly innocuous files such as images, audio, or video. For example, there have been reports suggesting that terrorist organizations have used steganography to conceal instructions within digital photographs posted on the internet. Additionally, the rise of Voice over Internet Protocol (VoIP) communications has led to the development of techniques that hide data within voice streams, making detection even more challenging. 
+One of its groundbreaking innovations is the integration of AI models such as YOLO and TrOCR for object and text detection within images and audio files. Traditional OCR (Optical Character Recognition) tools are notoriously unreliable, often failing to recognize even basic text hidden in images due to noise, distortions, or non-standard fonts. StegoScan.py overcomes this by offering optional AI-enhanced text detection, dramatically improving the ability to extract hidden messages from images, scanned documents, and even spectrograms of audio files. This is a game-changer for forensic analysts, cybersecurity professionals, and law enforcement agencies who need high-confidence text extraction from compromised media.
 
-In the realm of public media, steganography has also made its presence felt. Beyond its malicious uses, it has been employed for legitimate purposes such as digital watermarking, where copyright information is covertly embedded into media files to protect intellectual property rights. This technique allows content creators to trace the distribution of their work and combat unauthorized usage. Furthermore, the concept of social steganography has emerged, where individuals hide messages within cultural references, idioms, or pop culture content shared publicly, making the underlying messages visible only to certain audiences.
+Another novel feature is deep file extraction—a critical advancement in steganalysis. StegoScan.py doesn't just scan the surface of PDFs and DOCX files; it goes further, extracting and analyzing embedded files within them. This means steganographic content hidden inside attachments or deeply nested documents can be uncovered, addressing a major blind spot in traditional scanning tools.
 
-Given the increasing use of steganography in cybercrime, terrorism, and covert communications, it is crucial to develop tools that can scan websites for these hidden messages. Criminals and malicious actors exploit digital steganography to secretly exchange data, such as stolen credentials, malware commands, or illicit instructions, all while avoiding detection by traditional cybersecurity measures. Without the ability to scan and analyze web content for embedded messages, law enforcement and security agencies may struggle to track illegal activities, leading to potential threats to national security, financial systems, and personal privacy. Additionally, with the rise of misinformation and covert influence campaigns, steganographic techniques could be leveraged to spread hidden propaganda or coordinate disinformation efforts. Implementing scanning mechanisms would help identify and mitigate these risks while balancing privacy concerns, ensuring that steganography is not misused for nefarious purposes.
+The tool also boasts website and web server scanning capabilities, making it invaluable for security researchers monitoring illicit data exchanges or law enforcement tracking cybercriminals. A single command can analyze entire domains or IP ranges, retrieving and inspecting suspicious media and documents for hidden communications. Whether it’s detecting covert exchanges in dark web marketplaces, identifying embedded propaganda in misinformation campaigns, or revealing concealed instructions within terrorist networks, StegoScan.py offers unparalleled visibility into steganographic threats.
+
+By combining multiple steganalysis techniques into a unified test suite, StegoScan.py provides a detailed and multi-layered analysis of files, offering security teams, digital forensics experts, and cybersecurity researchers a cutting-edge solution to an evolving digital threat. As steganography techniques become more sophisticated, traditional tools fall short—StegoScan.py ensures organizations stay ahead of bad actors by detecting what others miss. For a more detailed description of steganography and how it's used review the section titled "Background and Rational of StegoScan".
 
 ## How StegoScan Works
 
-StegoScan first verifiys that all tools and imports are created to run the poject in its own Python enviroment that it creates. Once everything is installed it will verify the (if selected) IP address(s) to ensure they are webservers. Then using the IP address(s) and or website URL's supplied it will scrape all available files of the listed filetypes given in the command arguments. If a local directory is also selected it will copy these files as well. All the collected files will be stored in the choosen directory and sorted by file type. Once this is complete StegoScan will create a results directory and begin executing all of the test slected. As files containing steganographic techniques are found they are stored in the results folder under the folder associated with the test that identified the steganography. Once all test are complete the tool will end the execution. 
+StegoScan first creates its own Python enviorment by creating a local enviroment folder. It then installs all required tools and packages that are required to run the tool suite. Once everything is installed it will verify the (if selected) IP address(s) to ensure they are webservers. Then using the IP address(s) and or website URL's supplied it will scrape all available files of the listed filetypes given in the command arguments. If a local directory is also selected it will copy these files as well. All the collected files will be stored in the choosen directory and sorted by file type. Once this is complete StegoScan will create a results directory and begin executing all of the test slected. As files containing steganographic techniques are found they are stored in the results folder under the folder associated with the test that identified the steganography. Once all test are complete the tool will end the execution.
 
 ## Novel Features
 
-* Website and webserver scanning abilities.
+* Website and Web Server Scanning Abilities – Unlike conventional steganalysis tools that focus only on static files, StegoScan.py actively scans entire websites, IP ranges, and web servers for hidden messages. Whether investigating dark web marketplaces, cybercriminal forums, or compromised corporate sites, it automates the entire process, retrieving and analyzing files for embedded steganographic content. No more manual downloading and sorting—StegoScan does it all for you!
 
-* AI object and text detection on images and audio files.
+* AI Object and Text Detection on Images and Audio Files – Traditional OCR (Optical Character Recognition) is unreliable, often failing on distorted text, non-standard fonts, or noisy images. StegoScan.py integrates advanced AI models like YOLO and TrOCR to enhance text extraction and object detection, revealing hidden messages that standard OCR completely misses. Even audio spectrograms can be scanned for steganographic content, offering unparalleled insight into hidden data exchanges!
 
-* Deep file extraction in PDFs and DOCX files by finding steganography in files embeded in them.
+* Deep File Extraction in PDFs and DOCX Files – Most tools barely scratch the surface when analyzing document files, but StegoScan.py digs deeper! It automatically extracts embedded files hidden within PDFs, DOCX documents, and other complex formats, analyzing them for steganographic data. This eliminates a major blind spot—hidden payloads concealed inside innocent-looking documents are no longer safe from detection. No more overlooked hidden files—if it's there, StegoScan will find it.
 
-* Combined tool test suite for detailed file analysis.
+* Combined Tool Test Suite for Detailed File Analysis – StegoScan.py isn't just a one-trick pony. It combines multiple steganography detection methods into a single, powerful test suite, ensuring layered, thorough analysis of every scanned file. Rather than relying on a single detection technique (which can be easily evaded), StegoScan cross-checks files using multiple methods to maximize detection accuracy. Why settle for one scanning method when you can have them all in a seamless workflow?
+
+* Automated and Optimized for Linux – Tired of wrestling with dependencies? StegoScan.py is plug-and-play! It automatically installs what it needs, ensuring a smooth, efficient scanning process without manual setup. Built for speed and efficiency, it runs seamlessly on Linux, making it the perfect tool for cybersecurity professionals, penetration testers, and forensic analysts.
 
 ## General Features
 
-* Web scraping and file downloading to extract and download specific file types from URLs, IP addresses and ranges.
+* Web Scraping & File Downloading – Automates the extraction and downloading of specific file types from URLs, IP addresses, and IP ranges, enabling large-scale web content analysis.
 
-* Local directory extraction and testing.
+* Local Directory Extraction & Testing – Scans local directories for steganographic content, identifying hidden messages within stored files.
 
-* Image processing and steganography analysis.
+* Image Processing & Steganography Analysis – Performs in-depth steganographic testing on images, using multiple detection techniques to uncover hidden data.
 
-* Extracts images from PDFs and DOCX files.
+* Embedded File Extraction from PDFs & DOCX – Extracts and analyzes images and embedded files from PDF and DOCX documents, a critical step in identifying deeply hidden steganographic content.
 
-* Detects steganographic messages in images using stegano, stegdetect, and zsteg.
+* Steganographic Detection Tools – Integrates stegano, stegdetect, and zsteg for multi-layered detection of concealed messages within image files.
 
-* Object Detection & Text Recognition for embeded images.
+* AI-Powered Object & Text Detection – Enhances traditional detection methods with AI-driven analysis:
 
-* Uses YOLOv8 for object detection.
+* YOLOv8 for high-accuracy object detection, identifying embedded images, and symbols.
 
-* Uses TrOCR for handwriting and digital writing recognition.
+* TrOCR for advanced text recognition, extracting text from handwritten, stylized, or distorted fonts with improved accuracy over standard OCR tools.
 
-* Basic Malware & ELF File Analysis.
+* Basic Malware & ELF File Analysis – Performs preliminary security analysis on ELF binaries and other executables, helping to identify potential malware threats.
 
-* Audio & Binary File Analysis.
+* Audio & Binary File Analysis – Analyzes WAV and MP3 files for hidden steganographic data, including messages embedded in spectrograms or inaudible frequency ranges.
 
-* Uses binwalk for binary file structure extraction.
+* Binary File Structure Extraction – Utilizes Binwalk to extract and inspect hidden files, firmware, and embedded data within binary files.
 
-* Multi-threading Support: Improves performance for large-scale file processing.
+* Multi-Threading Support – Optimized for performance, enabling fast and efficient scanning of large datasets, making it ideal for forensic investigations and large-scale cybersecurity applications.
 
-# Test
+# Steganography Test Suite
 
 1. LSB - Uses stegano Python import to check PNG files for plain text messages hidden in the LSB of the file.
 
@@ -125,6 +129,15 @@ Expand malware analysis with more YARA rules.
 Improve object detection using advanced image processing techniques.
 
 Expand to Google Drive scanning.
+
+# Background and Rational of StegoScan
+
+Steganography being the practice of hiding messages within other non-suspicious data—has seen a notable increase in utilization within criminal activities. Advancements in digital technologies have enabled malicious actors to embed illicit information within seemingly innocuous files such as images, audio, or video. For example, there have been reports suggesting that terrorist organizations have used steganography to conceal instructions within digital photographs posted on the internet. Additionally, the rise of Voice over Internet Protocol (VoIP) communications has led to the development of techniques that hide data within voice streams, making detection even more challenging. 
+
+In the realm of public media, steganography has also made its presence felt. Beyond its malicious uses, it has been employed for legitimate purposes such as digital watermarking, where copyright information is covertly embedded into media files to protect intellectual property rights. This technique allows content creators to trace the distribution of their work and combat unauthorized usage. Furthermore, the concept of social steganography has emerged, where individuals hide messages within cultural references, idioms, or pop culture content shared publicly, making the underlying messages visible only to certain audiences.
+
+Given the increasing use of steganography in cybercrime, terrorism, and covert communications, it is crucial to develop tools that can scan websites for these hidden messages. Criminals and malicious actors exploit digital steganography to secretly exchange data, such as stolen credentials, malware commands, or illicit instructions, all while avoiding detection by traditional cybersecurity measures. Without the ability to scan and analyze web content for embedded messages, law enforcement and security agencies may struggle to track illegal activities, leading to potential threats to national security, financial systems, and personal privacy. Additionally, with the rise of misinformation and covert influence campaigns, steganographic techniques could be leveraged to spread hidden propaganda or coordinate disinformation efforts. Implementing scanning mechanisms would help identify and mitigate these risks while balancing privacy concerns, ensuring that steganography is not misused for nefarious purposes.
+
 
 # License
 
