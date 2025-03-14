@@ -58,6 +58,11 @@ StegoScan first creates its own Python enviorment by creating a local enviroment
 
 1. LSB - Uses stegano Python import to check PNG files for plain text messages hidden in the LSB of the file.
 
+<p align="center">
+  <img src="images/detecting.pdf_image_3_1.png" width="700" height="400" >
+  <img src="images/detecting.pdf_image_3_2.png" width="700" height="400" >
+</p>
+
 2. Image integrity - Uses Pillow Python import to check PNG and JPG file's integrity.
 
 3. Hist - Uses Matplotlib Python import to generate histograms showing the distribution of RGB color values for PNG and JPG files.
