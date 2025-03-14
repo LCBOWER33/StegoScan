@@ -16,7 +16,13 @@ Given the increasing use of steganography in cybercrime, terrorism, and covert c
 
 ## Novel Features
 
-...
+* Website and webserver scanning abilities.
+
+* AI object and text detection on images and audio files.
+
+* Deep file extraction in PDFs and DOCX files by finding steganography in files embeded in them.
+
+* Combined tool test suite for detailed file analysis.
 
 ## General Features
 
