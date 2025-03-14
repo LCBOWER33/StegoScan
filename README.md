@@ -12,7 +12,7 @@ Given the increasing use of steganography in cybercrime, terrorism, and covert c
 
 ## How StegoScan Works
 
-... 
+StegoScan first verifiys that all tools and imports are created to run the poject in its own Python enviroment that it creates. Once everything is installed it will verify the (if selected) IP address(s) to ensure they are webservers. Then using the IP address(s) and or website URL's supplied it will scrape all available files of the listed filetypes given in the command arguments. If a local directory is also selected it will copy these files as well. All the collected files will be stored in the choosen directory and sorted by file type. Once this is complete StegoScan will create a results directory and begin executing all of the test slected. As files containing steganographic techniques are found they are stored in the results folder under the folder associated with the test that identified the steganography. Once all test are complete the tool will end the execution. 
 
 ## Novel Features
 
