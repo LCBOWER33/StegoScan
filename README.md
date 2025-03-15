@@ -14,7 +14,11 @@ By combining multiple steganalysis techniques into a unified test suite, StegoSc
 
 ## How StegoScan Works
 
-StegoScan first creates its own Python enviorment by creating a local enviroment folder. It then installs all required tools and packages that are required to run the tool suite. Once everything is installed it will verify the (if selected) IP address(s) to ensure they are webservers. Then using the IP address(s) and or website URL's supplied it will scrape all available files of the listed filetypes given in the command arguments. If a local directory is also selected it will copy these files as well. All the collected files will be stored in the choosen directory and sorted by file type. Once this is complete StegoScan will create a results directory and begin executing all of the test slected. As files containing steganographic techniques are found they are stored in the results folder under the folder associated with the test that identified the steganography. Once all test are complete the tool will end the execution.
+StegoScan kicks off by setting up its own dedicated Python environment, creating a local workspace and installing all the necessary tools and packages to power its suite of analysis features. Once everything is in place, it verifies any provided IP addresses (if selected) to ensure they belong to active web servers.
+
+With the targets confirmed, StegoScan gets to work—scraping all available files of the specified types from the given IP addresses and URLs. If a local directory is selected, it gathers files from there as well. Every collected file is neatly organized by type and stored in the chosen directory.
+
+Next, StegoScan prepares a results directory and launches its suite of steganography detection tests. For greater detail into what test are availible review the section titled "Steganography Test Suite". As hidden data is uncovered, files are categorized and stored in subfolders corresponding to the specific test that identified them. Once all tests have run their course, StegoScan finalizes the process and concludes execution.
 
 ## Novel Features
 
@@ -56,11 +60,16 @@ StegoScan first creates its own Python enviorment by creating a local enviroment
 
 # Steganography Test Suite
 
+(Underneith some test are sample files that have been used to test the tool outlining visually what the test will uncover and how inconspicous files can be when on communication sites)
+
 1. LSB - Uses stegano Python import to check PNG files for plain text messages hidden in the LSB of the file.
 
 <p align="center">
   <img src="images/image_3_1.png" width="400">
   <img src="images/image_3_2.png" width="400">
+</p>
+<p align="center">
+  <em>NEED TO ADD PIC's AND LABLE</em>
 </p>
 
 2. Image integrity - Uses Pillow Python import to check PNG and JPG file's integrity.
@@ -73,6 +82,9 @@ StegoScan first creates its own Python enviorment by creating a local enviroment
   <img src="images/Steganography_original.png" width="400">
   <img src="images/detection_results.gif" width="400">
 </p>
+<p align="center">
+  <em>NEED TO ADD LABLE</em>
+</p>
 
 5. Jpeg - Uses Stegdetect Linux commandline tool to test JPG files to detect hidden data embedded within images using techniques like jSteg, jphide, Outguess, F5 (header analysis), invisible secrets, appendX and camouflage.
 
@@ -81,6 +93,9 @@ StegoScan first creates its own Python enviorment by creating a local enviroment
 <p align="center">
   <img src="images/image_3_1.png" width="400">
   <img src="images/image_3_2.png" width="400">
+</p>
+<p align="center">
+  <em>NEED TO ADD LABLE</em>
 </p>
 
 7. Audio integrity - Uses Wave Python import to check MP3 and WAV file's integrity.
@@ -91,14 +106,13 @@ StegoScan first creates its own Python enviorment by creating a local enviroment
   [Listen to the audio](https://github.com/LCBOWER33/StegoScan/blob/main/images/Drawing_of_the_word_Wikipedia.wav)
   <img src="images/spectrogram.png" width="600">
 </p>
+<p align="center">
+  <em>NEED TO ADD LABLE</em>
+</p>
 
 9. Binary - Uses Binwalk Linux commandline tool to test binary files for embedded files & data, identifies known file signatures inside a binary (e.g., ZIP, PNG, ELF, etc.), detects firmware components within a binary image, compressed and encrypted data, finds compressed data (e.g., LZMA, GZIP, BZIP2) inside files, flags encrypted or obfuscated data, file system signatures, recognizes embedded file systems (e.g., SquashFS, JFFS2, EXT, FAT), detects compiled executables (ELF, PE, Mach-O), identifies bootloaders and firmware components, and entropy analysis
 
 10. Elf check - Uses YARA rules, magic bytes, Linux file command, and entropy analysis to check all files for embeded malware.
-
-## Basic Usage
-
-sudo python StegoScan.py -u "https://example.com" -t "*" -o "downloads" -m "all"
 
 # Arguments:
 
@@ -115,6 +129,9 @@ sudo python StegoScan.py -u "https://example.com" -t "*" -o "downloads" -m "all"
 -l, --local : Path to a local file or directory for analysis.
 
 # Example Commands
+
+## Basic Usage
+sudo python StegoScan.py -u "https://example.com" -t "*" -o "downloads" -m "all"
 
 ## Download files from a URL
 sudo python StegoScan.py -u "https://example.com" -t "jpg,png" -n 5 -o "downloads" -m "all"
@@ -154,6 +171,9 @@ In the realm of public media, steganography has also made its presence felt. Bey
 
 Given the increasing use of steganography in cybercrime, terrorism, and covert communications, it is crucial to develop tools that can scan websites for these hidden messages. Criminals and malicious actors exploit digital steganography to secretly exchange data, such as stolen credentials, malware commands, or illicit instructions, all while avoiding detection by traditional cybersecurity measures. Without the ability to scan and analyze web content for embedded messages, law enforcement and security agencies may struggle to track illegal activities, leading to potential threats to national security, financial systems, and personal privacy. Additionally, with the rise of misinformation and covert influence campaigns, steganographic techniques could be leveraged to spread hidden propaganda or coordinate disinformation efforts. Implementing scanning mechanisms would help identify and mitigate these risks while balancing privacy concerns, ensuring that steganography is not misused for nefarious purposes.
 
+# Refrences
+
+ADD WIKI AND THEN DETECTIONS.PDF
 
 # License
 
