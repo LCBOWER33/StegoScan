@@ -88,8 +88,8 @@ StegoScan first creates its own Python enviorment by creating a local enviroment
 8. Audio dectection - Uses Librosa Python import to generate audio spectrogram's for MP3 and WAV files that are then ran through YOLOv8 and TrORC to check for images or messages hidden in the depiction of the frequency values for the file over the time length of the file.
 
 <p align="center">
-  <img src="images/image_3_1.png" width="400">
-  <img src="images/spectrogram.png" width="400">
+  [Listen to the audio](https://github.com/LCBOWER33/StegoScan/blob/main/images/Drawing_of_the_word_Wikipedia.wav)
+  <img src="images/spectrogram.png" width="600">
 </p>
 
 9. Binary - Uses Binwalk Linux commandline tool to test binary files for embedded files & data, identifies known file signatures inside a binary (e.g., ZIP, PNG, ELF, etc.), detects firmware components within a binary image, compressed and encrypted data, finds compressed data (e.g., LZMA, GZIP, BZIP2) inside files, flags encrypted or obfuscated data, file system signatures, recognizes embedded file systems (e.g., SquashFS, JFFS2, EXT, FAT), detects compiled executables (ELF, PE, Mach-O), identifies bootloaders and firmware components, and entropy analysis
