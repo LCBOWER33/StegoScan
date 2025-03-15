@@ -4,11 +4,11 @@
 
 StegoScan.py is a powerful, next-generation tool for automated steganography detection in websites, web servers, and local directories, integrating AI-driven object and text recognition with deep file analysis. Unlike traditional steganography detection tools that focus on a limited set of file types or require manual processing, StegoScan.py is designed for comprehensive, automated scanning—scraping websites, dissecting embedded files, and detecting hidden messages across a broad range of formats, including PNG, JPG, BIN, PDF, DOCX, WAV, and MP3.
 
-One of its groundbreaking innovations is the integration of AI models such as YOLO and TrOCR for object and text detection within images and audio files. Traditional OCR (Optical Character Recognition) tools are notoriously unreliable, often failing to recognize even basic text hidden in images due to noise, distortions, or non-standard fonts. StegoScan.py overcomes this by offering optional AI-enhanced text detection, dramatically improving the ability to extract hidden messages from images, scanned documents, and even spectrograms of audio files. This is a game-changer for forensic analysts, cybersecurity professionals, and law enforcement agencies who need high-confidence text extraction from compromised media.
+The tool boasts website and web server scanning capabilities, making it invaluable for security researchers monitoring illicit data exchanges or law enforcement tracking cybercriminals. A single command can analyze entire domains or IP ranges, retrieving and inspecting suspicious media and documents for hidden communications. Whether it’s detecting covert exchanges in dark web marketplaces, identifying embedded propaganda in misinformation campaigns, or revealing concealed instructions within terrorist networks, StegoScan.py offers unparalleled visibility into steganographic threats.
+
+One of its steganography detection improvements is the integration of AI models such as YOLO and TrOCR for object and text detection within images and audio files that previously had to be manually verified. Traditional OCR (Optical Character Recognition) tools are notoriously unreliable, often failing to recognize even basic text hidden in images due to noise, distortions, or non-standard fonts. StegoScan.py overcomes this by offering optional AI-enhanced text detection, dramatically improving the ability to extract hidden messages from images, scanned documents, and even spectrograms of audio files. This is a game-changer for forensic analysts, cybersecurity professionals, and law enforcement agencies who need high-confidence text extraction from compromised media.
 
 Another novel feature is deep file extraction—a critical advancement in steganalysis. StegoScan.py doesn't just scan the surface of PDFs and DOCX files; it goes further, extracting and analyzing embedded files within them. This means steganographic content hidden inside attachments or deeply nested documents can be uncovered, addressing a major blind spot in traditional scanning tools.
-
-The tool also boasts website and web server scanning capabilities, making it invaluable for security researchers monitoring illicit data exchanges or law enforcement tracking cybercriminals. A single command can analyze entire domains or IP ranges, retrieving and inspecting suspicious media and documents for hidden communications. Whether it’s detecting covert exchanges in dark web marketplaces, identifying embedded propaganda in misinformation campaigns, or revealing concealed instructions within terrorist networks, StegoScan.py offers unparalleled visibility into steganographic threats.
 
 By combining multiple steganalysis techniques into a unified test suite, StegoScan.py provides a detailed and multi-layered analysis of files, offering security teams, digital forensics experts, and cybersecurity researchers a cutting-edge solution to an evolving digital threat. As steganography techniques become more sophisticated, traditional tools fall short—StegoScan.py ensures organizations stay ahead of bad actors by detecting what others miss. For a more detailed description of steganography and how it's used review the section titled "Background and Rational of StegoScan".
 
@@ -65,8 +65,8 @@ Next, StegoScan prepares a results directory and launches its suite of steganogr
 1. LSB - Uses stegano Python import to check PNG files for plain text messages hidden in the LSB of the file.
 
 <p align="center">
-  <img src="images/image_3_1.png" width="400">
-  <img src="images/image_3_2.png" width="400">
+  <img src="images/ARDU_Path_compair.png" width="400">
+  <img src="images/Lenna-secret.png" width="400">
 </p>
 <p align="center">
   <em>NEED TO ADD PIC's AND LABLE</em>
