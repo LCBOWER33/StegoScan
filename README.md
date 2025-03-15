@@ -69,7 +69,7 @@ Next, StegoScan prepares a results directory and launches its suite of steganogr
   <img src="images/Lenna-secret.png" width="400">
 </p>
 <p align="center">
-  <em>NEED TO ADD PIC's AND LABLE</em>
+  <em>Unaltered image on the left, "hello world" embeded in the image on the right</em>
 </p>
 
 2. Image integrity - Uses Pillow Python import to check PNG and JPG file's integrity.
@@ -83,7 +83,7 @@ Next, StegoScan prepares a results directory and launches its suite of steganogr
   <img src="images/detection_results.gif" width="400">
 </p>
 <p align="center">
-  <em>NEED TO ADD LABLE</em>
+  <em>Hidden image of a cat hidden in the LSBs uncovered with YOLOv8 [2]</em>
 </p>
 
 5. Jpeg - Uses Stegdetect Linux commandline tool to test JPG files to detect hidden data embedded within images using techniques like jSteg, jphide, Outguess, F5 (header analysis), invisible secrets, appendX and camouflage.
@@ -95,7 +95,7 @@ Next, StegoScan prepares a results directory and launches its suite of steganogr
   <img src="images/image_3_2.png" width="400">
 </p>
 <p align="center">
-  <em>NEED TO ADD LABLE</em>
+  <em>Unaltered image on the left, the right image "has the first chapter of the “Hunting of the Snark” embedded into it" [1]</em>
 </p>
 
 7. Audio integrity - Uses Wave Python import to check MP3 and WAV file's integrity.
@@ -107,7 +107,7 @@ Next, StegoScan prepares a results directory and launches its suite of steganogr
   <img src="images/spectrogram.png" width="600">
 </p>
 <p align="center">
-  <em>NEED TO ADD LABLE</em>
+  <em>Hidden text message inside of an audio file uncovered using TrORC [2]</em>
 </p>
 
 9. Binary - Uses Binwalk Linux commandline tool to test binary files for embedded files & data, identifies known file signatures inside a binary (e.g., ZIP, PNG, ELF, etc.), detects firmware components within a binary image, compressed and encrypted data, finds compressed data (e.g., LZMA, GZIP, BZIP2) inside files, flags encrypted or obfuscated data, file system signatures, recognizes embedded file systems (e.g., SquashFS, JFFS2, EXT, FAT), detects compiled executables (ELF, PE, Mach-O), identifies bootloaders and firmware components, and entropy analysis
@@ -173,7 +173,9 @@ Given the increasing use of steganography in cybercrime, terrorism, and covert c
 
 # Refrences
 
-ADD WIKI AND THEN DETECTIONS.PDF
+[1] Detecting Steganographic Content on the Internet. 2002 paper by Niels Provos and Peter Honeyman published in Proceedings of the Network and Distributed System Security Symposium (San Diego, CA, 6–8 February 2002). NDSS 2002. Internet Society, Washington, D.C.
+
+[2] “Steganography,” Wikipedia, https://en.wikipedia.org/wiki/Steganography (accessed Jan. 27, 2025). 
 
 # License
 
