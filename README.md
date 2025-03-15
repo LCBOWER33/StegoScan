@@ -59,8 +59,8 @@ StegoScan first creates its own Python enviorment by creating a local enviroment
 1. LSB - Uses stegano Python import to check PNG files for plain text messages hidden in the LSB of the file.
 
 <p align="center">
-  <img src="images/detecting.pdf_image_3_1.png" width="700" height="400" >
-  <img src="images/detecting.pdf_image_3_2.png" width="700" height="400" >
+  <img src="images/image_3_1.png" width="400">
+  <img src="images/image_3_2.png" width="400">
 </p>
 
 2. Image integrity - Uses Pillow Python import to check PNG and JPG file's integrity.
@@ -70,16 +70,27 @@ StegoScan first creates its own Python enviorment by creating a local enviroment
 4. Object detection - Uses YOLOv8 and TrORC to test each layer of PNG and JPG files by removing the LSB iterativly and testing only red, green, and blue filters on the image.
 
 <p align="center">
-  <img src="images/detection_results.gif" width="700" height="400" >
+  <img src="images/Steganography_original.png" width="400">
+  <img src="images/detection_results.gif" width="400">
 </p>
 
 5. Jpeg - Uses Stegdetect Linux commandline tool to test JPG files to detect hidden data embedded within images using techniques like jSteg, jphide, Outguess, F5 (header analysis), invisible secrets, appendX and camouflage.
 
 6. Png - Uses Zsteg Linux commandline tool to test PNG to detect LSB steganography, check different color channels (R, G, B, A) and their bit planes, detects common encoding techniques used to hide data in images, payload extraction, text and ASCII hidden messages, and entropy analysis.
 
+<p align="center">
+  <img src="images/image_3_1.png" width="400">
+  <img src="images/image_3_2.png" width="400">
+</p>
+
 7. Audio integrity - Uses Wave Python import to check MP3 and WAV file's integrity.
 
 8. Audio dectection - Uses Librosa Python import to generate audio spectrogram's for MP3 and WAV files that are then ran through YOLOv8 and TrORC to check for images or messages hidden in the depiction of the frequency values for the file over the time length of the file.
+
+<p align="center">
+  <img src="images/image_3_1.png" width="400">
+  <img src="images/spectrogram.png" width="400">
+</p>
 
 9. Binary - Uses Binwalk Linux commandline tool to test binary files for embedded files & data, identifies known file signatures inside a binary (e.g., ZIP, PNG, ELF, etc.), detects firmware components within a binary image, compressed and encrypted data, finds compressed data (e.g., LZMA, GZIP, BZIP2) inside files, flags encrypted or obfuscated data, file system signatures, recognizes embedded file systems (e.g., SquashFS, JFFS2, EXT, FAT), detects compiled executables (ELF, PE, Mach-O), identifies bootloaders and firmware components, and entropy analysis
 
