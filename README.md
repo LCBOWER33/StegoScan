@@ -20,6 +20,10 @@ With the targets confirmed, StegoScan gets to work—scraping all available file
 
 Next, StegoScan prepares a results directory and launches its suite of steganography detection tests. For greater detail into what test are availible review the section titled "Steganography Test Suite". As hidden data is uncovered, files are categorized and stored in subfolders corresponding to the specific test that identified them. Once all tests have run their course, StegoScan finalizes the process and concludes execution.
 
+## Demo Video
+
+ADD AND CREATE DEMO VIDEO
+
 ## Novel Features
 
 * Website and Web Server Scanning Abilities – Unlike conventional steganalysis tools that focus only on static files, StegoScan.py actively scans entire websites, IP ranges, and web servers for hidden messages. Whether investigating dark web marketplaces, cybercriminal forums, or compromised corporate sites, it automates the entire process, retrieving and analyzing files for embedded steganographic content. No more manual downloading and sorting—StegoScan does it all for you!
