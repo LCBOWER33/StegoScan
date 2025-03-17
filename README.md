@@ -10,7 +10,7 @@ One of its steganography detection improvements is the integration of AI models 
 
 Another novel feature is deep file extraction—a critical advancement in steganalysis. StegoScan.py doesn't just scan the surface of PDFs and DOCX files; it goes further, extracting and analyzing embedded files within them. This means steganographic content hidden inside attachments or deeply nested documents can be uncovered, addressing a major blind spot in traditional scanning tools.
 
-By combining multiple steganalysis techniques into a unified test suite, StegoScan.py provides a detailed and multi-layered analysis of files, offering security teams, digital forensics experts, and cybersecurity researchers a cutting-edge solution to an evolving digital threat. As steganography techniques become more sophisticated, traditional tools fall short—StegoScan.py ensures organizations stay ahead of bad actors by detecting what others miss. For a more detailed description of steganography and how it's used review the section titled "Background and Rationale of StegoScan".
+By combining multiple steganalysis techniques into a unified test, StegoScan.py provides a detailed and multi-layered analysis of files, offering security teams, digital forensics experts, and cybersecurity researchers a cutting-edge solution to an evolving digital threat. As steganography techniques become more sophisticated, traditional tools fall short—StegoScan.py ensures organizations stay ahead of bad actors by detecting what others miss. For a more detailed description of steganography and how it's used review the section titled "Background and Rationale of StegoScan".
 
 ## How StegoScan Works
 
@@ -18,23 +18,23 @@ StegoScan kicks off by setting up its own dedicated Python environment, creating
 
 With the targets confirmed, StegoScan gets to work—scraping all available files of the specified types from the given IP addresses and URLs. If a local directory is selected, it gathers files from there as well. Every collected file is neatly organized by type and stored in the chosen directory.
 
-Next, StegoScan prepares a results directory and launches its suite of steganography detection tests. For greater detail into what tests are available review the section titled "Steganography Test Suite". As hidden data is uncovered, files are categorized and stored in subfolders corresponding to the specific test that identified them. Once all tests have run their course, StegoScan finalizes the process and concludes execution.
+Next, StegoScan prepares a results directory and launches its suite of steganography detection tests. For greater detail into what tests are available review the section titled "Steganography Test". As hidden data is uncovered, files are categorized and stored in subfolders corresponding to the specific test that identified them. Once all tests have run their course, StegoScan finalizes the process and concludes execution.
 
 ## Demo Video
 
-[![Watch the video](https://github.com/LCBOWER33/StegoScan/blob/main/images/StegoScan_Demo_thumbnail.png)](https://drive.google.com/drive/folders/1cbJ80r0n68wGi252HmIAfTKQDEPxANLr)
+[![Watch the video](https://github.com/LCBOWER33/StegoScan/blob/main/images/StegoScan_Demo_thumbnail.png)](https://youtu.be/tJHoT0yxNKA)
 
 ## Novel Features
 
 * Website and Web Server Scanning Abilities – Unlike conventional steganalysis tools that focus only on static files, StegoScan.py actively scans entire websites, IP ranges, and web servers for hidden messages. Whether investigating dark web marketplaces, cybercriminal forums, or compromised corporate sites, it automates the entire process, of retrieving and analyzing files for embedded steganographic content. No more manual downloading and sorting—StegoScan does it all for you!
 
-* AI Object and Text Detection on Images and Audio Files – Traditional OCR (Optical Character Recognition) is unreliable, often failing on distorted text, non-standard fonts, or noisy images. StegoScan.py integrates advanced AI models like YOLO and TrOCR to enhance text extraction and object detection, revealing hidden messages that standard OCR completely misses. Even audio spectrograms can be scanned for steganographic content, offering unparalleled insight into hidden data exchanges!
+* AI Object and Text Detection on Images and Audio Files – Traditional OCR (Optical Character Recognition) is unreliable, often failing on distorted text, non-standard fonts, or noisy images. StegoScan.py integrates advanced AI models like YOLO and TrOCR to enhance text extraction and object detection, revealing hidden messages that standard OCR completely misses. Even audio spectrograms can be scanned for steganographic content, offering insight into hidden data exchanges.
 
 * Deep File Extraction in PDFs and DOCX Files – Most tools barely scratch the surface when analyzing document files, but StegoScan.py digs deeper! It automatically extracts embedded files hidden within PDFs, DOCX documents, and other complex formats, analyzing them for steganographic data. This eliminates a major blind spot—hidden payloads concealed inside innocent-looking documents are no longer safe from detection. No more overlooked hidden files—if it's there, StegoScan will find it.
 
-* Combined Tool Test Suite for Detailed File Analysis – StegoScan.py isn't just a one-trick pony. It combines multiple steganography detection methods into a single, powerful test suite, ensuring layered, thorough analysis of every scanned file. Rather than relying on a single detection technique (which can be easily evaded), StegoScan cross-checks files using multiple methods to maximize detection accuracy. Why settle for one scanning method when you can have them all in a seamless workflow?
+* Combined Tool Test for Detailed File Analysis – StegoScan.py isn't just a one-trick pony. It combines multiple steganography detection methods into a single, powerful test, ensuring layered, thorough analysis of every scanned file. Rather than relying on a single detection technique (which can be easily evaded), StegoScan cross-checks files using multiple methods to maximize detection accuracy.
 
-* Automated and Optimized for Linux – Tired of wrestling with dependencies? StegoScan.py is plug-and-play! It automatically installs what it needs, ensuring a smooth, efficient scanning process without manual setup. Built for speed and efficiency, it runs seamlessly on Linux, making it the perfect tool for cybersecurity professionals, penetration testers, and forensic analysts.
+* Automated and Optimized for Linux – Tired of wrestling with dependencies? StegoScan.py is plug-and-play. It automatically installs what it needs, ensuring a smooth, efficient scanning process without manual setup. Built for speed and efficiency, it runs seamlessly on Linux, making it the perfect tool for cybersecurity professionals, penetration testers, and forensic analysts.
 
 ## General Features
 
@@ -62,7 +62,7 @@ Next, StegoScan prepares a results directory and launches its suite of steganogr
 
 * Multi-Threading Support – Optimized for performance, enabling fast and efficient scanning of large datasets, making it ideal for forensic investigations and large-scale cybersecurity applications.
 
-# Steganography Test Suite
+# Steganography Test
 
 (Underneath some tests are sample files that have been used to test the tool outlining visually what the test will uncover and how inconspicuous files can be when on communication sites)
 
@@ -157,7 +157,7 @@ GPU acceleration is used if a CUDA-compatible GPU is detected.
 
 Create GUI implementation if no command-line arguments are supplied. 
 
-Expand the test suite to include Strings, Exiftool, StegSeek, WavSteg, OpenPuff, and Stegcracker.
+Expand the test to include Strings, Exiftool, StegSeek, WavSteg, OpenPuff, and Stegcracker.
 
 Expand to a web crawler and allow for different search depths. 
 
