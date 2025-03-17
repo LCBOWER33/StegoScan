@@ -22,7 +22,7 @@ Next, StegoScan prepares a results directory and launches its suite of steganogr
 
 ## Demo Video
 
-ADD AND CREATE DEMO VIDEO
+[![Watch the video](https://github.com/LCBOWER33/StegoScan/blob/main/images/StegoScan_Demo_thumbnail.png)](https://drive.google.com/drive/folders/1cbJ80r0n68wGi252HmIAfTKQDEPxANLr)
 
 ## Novel Features
 
