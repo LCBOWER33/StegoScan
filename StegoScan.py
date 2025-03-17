@@ -25,6 +25,7 @@ required_packages = {
     "PyPDF2": "PyPDF2",
     "yara": "yara-python",  # YARA for malware analysis
     "librosa": "librosa",
+    "fitz": "pymupdf",
 }
 
 
@@ -154,10 +155,7 @@ import yara
 import librosa
 import librosa.display
 
-# TODO: Check if there are any arguments and if not load the GUI that will execute the proper code
-
-# TODO: Clean up downloads folder, may need to save files with stego found in them
-
+import fitz
 
 # Check if CUDA (GPU) is available, otherwise fallback to CPU
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -300,6 +298,12 @@ def get_wikipedia_image(url):
     return None
 
 
+def is_valid_url(url):
+    """Check if a URL is valid."""
+    parsed = urlparse(url)
+    return bool(parsed.scheme and parsed.netloc)
+
+
 def download_file(url, output_dir):
     try:
         if 'wikipedia.org' in url and '/wiki/File:' in url:
@@ -309,25 +313,29 @@ def download_file(url, output_dir):
             else:
                 print(f"Skipping Wikipedia file page: {url}")
                 return
-
+        
+        if not is_valid_url(url):
+            print(f"Invalid URL skipped: {url}")
+            return
+        
         response = requests.get(url, stream=True, timeout=5)
         response.raise_for_status()
-
+        
         parsed_url = urlparse(url)
         file_name = os.path.basename(unquote(parsed_url.path))
         if not file_name or '.' not in file_name:
             file_name = "unknown_file"
-
+        
         file_extension = file_name.split('.')[-1].lower() if '.' in file_name else 'unknown'
-
+        
         file_type_dir = os.path.join(output_dir, file_extension)
         os.makedirs(file_type_dir, exist_ok=True)
         output_path = os.path.join(file_type_dir, file_name)
-
+        
         with open(output_path, 'wb') as file:
             for chunk in response.iter_content(chunk_size=8192):
                 file.write(chunk)
-        # print(f"Downloaded: {url} -> {output_path}")
+        print(f"Downloaded: {url} -> {output_path}")
     except requests.RequestException as e:
         print(f"Failed to download {url}: {e}")
 
@@ -370,13 +378,17 @@ def get_file_links(url, file_types, limit, all_files):
         response.raise_for_status()
         soup = BeautifulSoup(response.text, 'html.parser')
         links = set()
-
+        
         for link in soup.find_all('a', href=True):
-            href = link['href']
+            href = link['href'].strip()
             full_url = urljoin(url, href)
+            
+            if not is_valid_url(full_url):
+                continue  # Skip invalid URLs
+            
             parsed_href = urlparse(full_url).path
             file_ext = parsed_href.split('.')[-1].lower()
-
+            
             if all_files:
                 if file_ext in valid_extensions or ('wikipedia.org' in full_url and '/wiki/File:' in full_url):
                     links.add(full_url)
@@ -384,8 +396,8 @@ def get_file_links(url, file_types, limit, all_files):
                 links.add(full_url)
                 if len(links) >= limit:
                     break
-
-        # print(f"Found {len(links)} files:")
+        
+        print(f"Found {len(links)} files:")
         return list(links)[:limit] if not all_files else list(links)
     except requests.RequestException as e:
         print(f"Failed to fetch links from {url}: {e}")
@@ -413,37 +425,51 @@ def download_from_source(source, file_types, limit, all_files, output_dir):
 def extract_images_from_pdf(pdf_path, output_folder):
     """
     Extracts embedded images from a PDF and saves them as separate image files.
-
+    
     :param pdf_path: Path to the input PDF file
     :param output_folder: Folder to save extracted images
     """
     # Ensure output directory exists
     os.makedirs(output_folder, exist_ok=True)
-
+    
     # Open the PDF file
-    doc = fitz.open(pdf_path)
-
+    try:
+        doc = fitz.open(pdf_path)
+    except Exception as e:
+        print(f"Error opening PDF: {e}")
+        return
+    
     image_count = 0
-
+    
     for page_number in range(len(doc)):
         page = doc[page_number]
         images = page.get_images(full=True)
-
+        
+        if not images:
+            continue  # Skip pages with no images
+        
         for img_index, img in enumerate(images):
-            xref = img[0]  # Image XREF
-            base_image = doc.extract_image(xref)
-
-            image_bytes = base_image["image"]
-            image_ext = base_image["ext"]
-            image_filename = f"image_{page_number + 1}_{img_index + 1}.{image_ext}"
-            image_path = os.path.join(output_folder, image_filename)
-
-            with open(image_path, "wb") as image_file:
-                image_file.write(image_bytes)
-
-            image_count += 1
-            print(f"Extracted: {image_path}")
-
+            try:
+                xref = img[0]  # Image XREF
+                base_image = doc.extract_image(xref)
+                
+                if not base_image or "image" not in base_image:
+                    continue  # Skip invalid or empty images
+                
+                image_bytes = base_image["image"]
+                image_ext = base_image.get("ext", "png")  # Default to PNG if no extension found
+                file_name = os.path.basename(pdf_path)
+                image_filename = f"{file_name}_image_{page_number+1}_{img_index+1}.{image_ext}"
+                image_path = os.path.join(output_folder, image_filename)
+                
+                with open(image_path, "wb") as image_file:
+                    image_file.write(image_bytes)
+                    
+                image_count += 1
+                #print(f"Extracted: {image_path}")
+            except Exception as e:
+                print(f"Error extracting image on page {page_number+1}: {e}")
+    
     print(f"Total images extracted: {image_count}")
 
 
@@ -473,16 +499,20 @@ def extract_from_file(output_dir):
     for filename in os.listdir(pdf_dir):
         f = os.path.join(pdf_dir, filename)
         # checking if it is a file
+        #print("IN PDF")
         if os.path.isfile(f):
-            # print(f)
+            print(f)
             extract_images_from_pdf(f, png_dir)
+            
+    print("OUT")
 
-    for filename in os.listdir(docx_dir):
+    """for filename in os.listdir(docx_dir):
         f = os.path.join(docx_dir, filename)
         # checking if it is a file
+        print("IN DOCX")
         if os.path.isfile(f):
             # print(f)
-            extract_images_from_docx(f, png_dir)
+            extract_images_from_docx(f, png_dir)"""
 
 
 def convert_image_to_bin(image_path, out_file):
@@ -713,7 +743,7 @@ def t_lsb(output_dir):
                     pass
                     # print(e)
 
-    # print("lsb")
+    print("LSB TEST DONE")
 
 
 def image_integrity(output_dir):
@@ -777,7 +807,7 @@ def image_integrity(output_dir):
                         shutil.copy(image_path, f"{image_integrity_dir}/{filename}")
                         # print("Image might be altered:", e)
 
-    # print("image_integrity")
+    print("IMAGE INTEGRITY TEST DONE")
 
 
 def object_detection(output_dir):
@@ -837,6 +867,7 @@ def object_detection(output_dir):
                     process_and_save(lsb_image, f"{filename}_lsb_{bits}_bits_normalized")
 
                 # cv2.destroyAllWindows()
+    print("OBJECT DECTECTION TEST DONE")
 
 
 def hist(output_dir):  # will need to automate this
@@ -875,7 +906,7 @@ def hist(output_dir):  # will need to automate this
                 plt.savefig(f"{hist_dir}/{filename}_histogram.png")
                 # plt.show()
 
-    # print("hist")
+    print("HIST TEST DONE")
 
 
 def jpeg(output_dir):
@@ -899,7 +930,7 @@ def jpeg(output_dir):
                     shutil.copy(image_path, f"{jpeg_dir}/{filename}")
                     # print("Stegdetect Output:\n", result)
 
-    # print("jpeg")
+    print("JPEG TEST DONE")
 
 
 def png(output_dir):
@@ -921,9 +952,16 @@ def png(output_dir):
                     os.makedirs(png_dir, exist_ok=True)
 
                     shutil.copy(image_path, f"{png_dir}/{filename}")
+                    
+                    base_name, _ = os.path.splitext(filename)
+                    new_filename = f"{base_name}.txt"
+                    
+                    f = open(f"{png_dir}/{new_filename}", "w")
+                    f.write(result)
+                    f.close()
                     # print("Zsteg Output:\n", result)
 
-    # print("png")
+    print("PNG TEST DONE")
 
 
 def audio_integrity(
@@ -968,7 +1006,7 @@ def audio_integrity(
                     f.write(f"Number of Frames: {wav_file.getnframes()}\n")
                     f.close()
 
-                    # print("audio")
+    print("AUDIO INTEGRITY TEST DONE")
 
 
 def audio_dectection(output_dir):
@@ -1038,6 +1076,7 @@ def audio_dectection(output_dir):
 
                     shutil.copy(spectrogram_path, f"{audio_dectection_dir}/{base_name}_spectrogram.png")
                     # print("Extracted Printed Text:", text_printed)
+    print("AUDIO DECTECTION TEST DONE")
 
 
 def binary(output_dir):
@@ -1061,7 +1100,7 @@ def binary(output_dir):
                     shutil.copy(image_path, f"{binary_dir}/{filename}")
                     # print("Binwalk Output:\n", result)
 
-    # print("binary")
+    print("BINARY TEST DONE")
 
 
 def elf_check(output_dir):
@@ -1100,6 +1139,7 @@ def elf_check(output_dir):
             else:
                 pass
                 # print(f"[-] {file_path} is NOT an ELF file.")
+    print("ELF TEST DONE")
 
 
 # --------------------------------------------------------------
@@ -1178,8 +1218,9 @@ def main():
         docx_dir = os.path.join(output_dir, "docx")
         if os.path.exists(pdf_dir) or os.path.exists(docx_dir):
             # if "pdf" in file_types or "docx" in file_types:
-            # print("IN TYPES CHECK")
-            extract_from_file(output_dir)  # THIS IS JUST SAVING EACH PAGES AS A PICTURE THAT IS DOING ME NO GOOD
+            #print("IN TYPES CHECK")
+            # extract_from_file(output_dir)
+            pass
 
         process_images(output_dir)
 
@@ -1226,9 +1267,9 @@ def main():
 
 
 if __name__ == "__main__":
-    # python stegoScan.py -u "https://www.uah.edu" -t "pdf,jpg,png" -n 1 -o "downloads" -m "all"
+    # sudo python stegoScan.py -u "https://www.uah.edu" -t "pdf,jpg,png" -n 1 -o "downloads" -m "all"
     # sudo python stegoScan.py -l "downloads" -t "*" -n 1 -o "downloads" -m "all"
-    # python stegoScan.py -u "https://en.wikipedia.org/wiki/Steganography" -t "*" -o "downloads" -m "all"
+    # sudo python stegoScan.py -u "https://en.wikipedia.org/wiki/Steganography" -t "*" -o "Out" -m "all"
 
     # add more tools, save download history to a txt, scan your own google drive?, make it more of a crawler/spider (provide options), add tqdm to show test progress
     
@@ -1238,6 +1279,6 @@ if __name__ == "__main__":
 
     # add in levels of verbosity 
     
-    # higlight novel aspects
+    # need to limit the files from pdfs as we get 1500 files 
     
     main()
