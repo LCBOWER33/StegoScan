@@ -157,7 +157,7 @@ GPU acceleration is used if a CUDA-compatible GPU is detected.
 
 Create GUI implementation if no command-line arguments are supplied. 
 
-Expand the test to include Strings, Exiftool, StegSeek, WavSteg, OpenPuff, and Stegcracker.
+Expand the test to include Exiftool, StegSeek, and WavSteg.
 
 Expand to a web crawler and allow for different search depths. 
 
