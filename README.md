@@ -143,6 +143,16 @@ sudo python StegoScan.py -u "https://example.com" -t "jpg,png" -n 5 -o "download
 ## Analyze a local directory
 sudo python StegoScan.py -l "path/to/local/files" -t "*" -o "downloads" -m "lsb,hist,png"
 
+# GUI 
+
+While the GUI is still a work in progress with merging it into the full system, this is the current version:
+
+<p align="center">
+  <img src="images/StegoScan_GUI.png" width="400">
+</p>
+
+* Note that the GUI will automatically be loaded if no commandline arguments are passed during execution.
+
 # Notes
 
 All scraped files will be stored in the output directory supplied in the execution.
