@@ -4,9 +4,6 @@ import sys
 import subprocess
 import platform
 import venv
-import shutil
-import time
-
 
 VENV_DIR = "myenv"  # Name of the virtual environment folder
 
@@ -33,7 +30,24 @@ required_packages = {
     "ctypes": "ctypes",
     "hashlib": "hashlib",
     "io": "io",
+    "ttkbootstrap": "ttkbootstrap",
+    "tempfile": "tempfile",
 }
+
+
+def create_virtual_env():
+    """Creates a virtual environment if it doesn't exist."""
+    if not os.path.exists(VENV_DIR):
+        print(f"Creating virtual environment: {VENV_DIR}")
+        venv.create(VENV_DIR, with_pip=True)
+
+
+def get_venv_python():
+    """Returns the path to the Python interpreter inside the virtual environment."""
+    if os.name == "nt":  # For Windows, path might be different
+        return os.path.join(VENV_DIR, "Scripts", "python.exe")
+    else:
+        return os.path.join(VENV_DIR, "bin", "python3")
 
 
 def install_missing_packages():
@@ -85,96 +99,39 @@ def configure_windows_poppler():
 
         print("Warning: Poppler is not found. Please install and add it to PATH manually.")
 
-def install_python_3_12():
-    """Auto-installs Python 3.12 if it's not already installed on the system."""
-    print("Python 3.12 not found. Attempting to install it...")
-    
-    try:
-        if platform.system() == "Linux" and os.path.exists("/etc/debian_version"):
-            # Attempt to install Python 3.12 on Ubuntu/Debian systems
-            subprocess.check_call(["sudo", "apt-get", "update"])
-            subprocess.check_call(["sudo", "apt-get", "install", "-y", "python3.12", "python3.12-venv", "python3.12-dev"])
-            print("Python 3.12 has been successfully installed.")
-        else:
-            print("Automatic installation of Python 3.12 is not supported for this platform.")
-            sys.exit(1)
-    except subprocess.CalledProcessError as e:
-        print(f"Error during Python 3.12 installation: {e}")
-        sys.exit(1)
-
-def check_python_3_12_installed():
-    """Check if Python 3.12 is installed and accessible."""
-    python_exec = shutil.which("python3.12")
-    if python_exec is None:
-        print("Python 3.12 is not installed, attempting installation...")
-        install_python_3_12()
-        python_exec = shutil.which("python3.12")
-    
-    if python_exec is None:
-        print("Python 3.12 is still not available after installation attempt.")
-        sys.exit(1)
-
-    print(f"Python 3.12 found at {python_exec}")
-    return python_exec
-
-def create_virtual_env():
-    """Creates a virtual environment using Python 3.12."""
-    python_exec = check_python_3_12_installed()
-
-    # Ensure the virtual environment directory exists
-    if not os.path.exists(VENV_DIR):
-        print(f"Creating virtual environment at {VENV_DIR} using {python_exec}...")
-        subprocess.check_call([python_exec, "-m", "venv", VENV_DIR])
-    else:
-        print(f"Virtual environment already exists at {VENV_DIR}. Skipping creation.")
-
-def get_venv_python():
-    """Returns the path to the Python interpreter inside the virtual environment."""
-    if platform.system() == "Windows":
-        return os.path.join(VENV_DIR, "Scripts", "python.exe")
-    else:
-        return os.path.join(VENV_DIR, "bin", "python3.12")
 
 def run_script_in_venv():
-    """Restarts the script inside the virtual environment with sudo if needed."""
+    """Restarts the script inside the virtual environment if not already inside it."""
     python_exec = get_venv_python()
 
-    if sys.prefix == os.path.abspath(VENV_DIR):
+    # Avoid infinite loops by checking if we're already inside the venv
+    if sys.prefix == os.path.abspath(VENV_DIR):  # Already inside the venv
         print("Script is already running inside the virtual environment.")
-        return
+        return  # Do nothing, exit the function
 
     print(f"Running script inside virtual environment: {VENV_DIR}")
 
+    # Ensure that the python executable exists
     if not os.path.isfile(python_exec):
         print(f"Error: Python executable not found at {python_exec}")
         sys.exit(1)
 
-    # Prepend 'sudo' to the command
-    command = ["sudo", python_exec] + sys.argv
+    # Build the command to restart the script inside the virtual environment
+    command = [python_exec] + sys.argv
+
+    # Explicitly set the working directory to where the script is
     script_dir = os.path.dirname(os.path.abspath(__file__))
 
-    print(f"Executing command with sudo: {' '.join(command)}")
-    
     try:
-        # Stream output in real-time for easier debugging
-        process = subprocess.Popen(
-            command,
-            cwd=script_dir,
-            stdout=sys.stdout,
-            stderr=sys.stderr
-        )
-        process.communicate()
-
-        if process.returncode != 0:
-            print(f"Error: Script failed with return code {process.returncode}")
-            sys.exit(1)
-        else:
-            print("Script completed successfully.")
-    except Exception as e:
+        print(f"Restarting the script with command: {command}")
+        subprocess.check_call(command, cwd=script_dir, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as e:
         print(f"Error during restart: {e}")
         sys.exit(1)
-        
-        
+
+    sys.exit()  # Ensure the script exits after launching the new one
+
+
 # Setup environment and dependencies
 create_virtual_env()
 run_script_in_venv()  # Relaunch in venv if needed
@@ -204,6 +161,7 @@ sys.stderr = open(os.devnull, "w")
 
 import argparse
 import requests
+import shutil
 import ipaddress
 import threading
 from bs4 import BeautifulSoup
@@ -238,6 +196,16 @@ import fitz
 import hashlib
 import io
 
+# add these to import list
+import argparse
+import tkinter as tk
+from tkinter import ttk, filedialog, Toplevel, Label, Button
+import ttkbootstrap as tb
+import webbrowser
+from PIL import Image, ImageTk
+import requests
+import io
+import tempfile
 
 # Check if CUDA (GPU) is available, otherwise fallback to CPU
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -279,6 +247,9 @@ rule ELF_Malware {
 """
 
 results_folder = ""
+
+# GitHub README URL
+README_URL = "https://github.com/LCBOWER33/StegoScan/blob/main/README.md"
 
 
 def run_silent_command(command):
@@ -454,32 +425,6 @@ def get_file_links(url, file_types, limit, all_files):
         return []
 
 
-# def crawl_page(url, file_types, output_dir, visited_urls, depth=1, max_depth=3):
-#     if depth > max_depth:
-#         return
-#
-#     print(f"Crawling: {url} (Depth {depth})")
-#
-#     # Get file links from the current page
-#     file_links = get_file_links(url, file_types, limit=10, all_files=True)
-#
-#     for file_url in file_links:
-#         download_file(file_url, output_dir)
-#
-#     # Crawl linked pages on the current page
-#     if depth < max_depth:
-#         response = requests.get(url, timeout=5)
-#         response.raise_for_status()
-#         soup = BeautifulSoup(response.text, 'html.parser')
-#
-#         for link in soup.find_all('a', href=True):
-#             href = link['href']
-#             full_url = urljoin(url, href)
-#             if full_url not in visited_urls and is_valid_url(full_url):
-#                 visited_urls.add(full_url)
-#                 crawl_page(full_url, file_types, output_dir, visited_urls, depth + 1, max_depth)
-
-
 def copy_local_files(source, destination):
     if os.path.isdir(source):
         for file_name in os.listdir(source):
@@ -518,6 +463,8 @@ def process_ip_range(ip_range):
 def download_from_source(source, file_types, limit, all_files, output_dir, visited_urls=set(), max_depth=1, depth=0):
     if depth > max_depth or source in visited_urls:
         return
+        
+    print("IN DOWNLOAD FROM SOURCE")
 
     visited_urls.add(source)
     print(f"Crawling: {source} (Depth {depth})")
@@ -658,7 +605,7 @@ def extract_from_file(output_dir):
             print(f)
             extract_images_from_pdf(f, output_dir)
 
-    print("OUT")
+    # print("OUT")
 
     """for filename in os.listdir(docx_dir):
         f = os.path.join(docx_dir, filename)
@@ -667,6 +614,31 @@ def extract_from_file(output_dir):
         if os.path.isfile(f):
             # print(f)
             extract_images_from_docx(f, png_dir)"""
+
+def clean_up_folder(target_dir):
+    if not os.path.isdir(target_dir):
+        print(f"'{target_dir}' is not a valid directory.")
+        return
+
+    for filename in os.listdir(target_dir):
+        file_path = os.path.join(target_dir, filename)
+
+        if os.path.isfile(file_path):
+            ext = os.path.splitext(filename)[1].lower().lstrip(".")
+
+            # Group jpeg and jpg into same folder
+            if ext in ("jpeg", "jpg"):
+                ext_folder = "jpg"
+            else:
+                ext_folder = ext or "unknown"
+
+            # Create destination folder if it doesn't exist
+            dest_folder = os.path.join(target_dir, ext_folder)
+            os.makedirs(dest_folder, exist_ok=True)
+
+            # Move the file
+            shutil.move(file_path, os.path.join(dest_folder, filename))
+
 
 
 def convert_image_to_bin(image_path, out_file):
@@ -814,9 +786,9 @@ def process_and_save(image, variant_name):
     save_path = os.path.join(results_folder, f"object_detection/{variant_name}.png")
     cv2.imwrite(save_path, image)
 
-    cv2.imshow(f"Processed: {variant_name}", image)
-    cv2.waitKey(500)  # Show for 500ms before moving to the next image
-    cv2.destroyAllWindows()
+    # cv2.imshow(f"Processed: {variant_name}", image)
+    # cv2.waitKey(500)  # Show for 500ms before moving to the next image
+    # cv2.destroyAllWindows()
 
 
 def extract_lsb_and_normalize(image, bits):
@@ -1004,7 +976,7 @@ def t_lsb(output_dir):
                     pass
                     # print(e)
 
-    # print("LSB TEST DONE")
+    print("LSB TEST DONE")
 
 
 def image_integrity(output_dir):
@@ -1068,7 +1040,7 @@ def image_integrity(output_dir):
                         shutil.copy(image_path, f"{image_integrity_dir}/{filename}")
                         # print("Image might be altered:", e)
 
-    # print("IMAGE INTEGRITY TEST DONE")
+    print("IMAGE INTEGRITY TEST DONE")
 
 
 def object_detection(output_dir):
@@ -1128,12 +1100,15 @@ def object_detection(output_dir):
                     process_and_save(lsb_image, f"{filename}_lsb_{bits}_bits_normalized")
 
                 # cv2.destroyAllWindows()
-    # print("OBJECT DECTECTION TEST DONE")
+    print("OBJECT DECTECTION TEST DONE")
 
 
 def hist(output_dir):  # will need to automate this
     hist_dir = os.path.join(results_folder, "hist")
     os.makedirs(hist_dir, exist_ok=True)
+    
+    print("OUTOUT DIR IS HERE:", output_dir)
+    print("RESULTS DIR IS HERE:", results_folder)
 
     png_dir = os.path.join(output_dir, "png")
     if os.path.isdir(png_dir):
@@ -1148,6 +1123,7 @@ def hist(output_dir):  # will need to automate this
                 plt.hist(image.ravel(), bins=256, range=[0, 256])
                 plt.title("Histogram of Pixel Intensities")
                 # Save the histogram as a PNG file
+                print(f"{hist_dir}/{filename}_histogram.png")
                 plt.savefig(f"{hist_dir}/{filename}_histogram.png")
                 plt.close()  # Close the current figure
                 # plt.show()  # need to just save the hist for later inspection, make a hist folder and then save them there
@@ -1168,7 +1144,7 @@ def hist(output_dir):  # will need to automate this
                 plt.savefig(f"{hist_dir}/{filename}_histogram.png")
                 # plt.show()
 
-    # print("HIST TEST DONE")
+    print("HIST TEST DONE")
 
 
 def jpeg(output_dir):
@@ -1193,7 +1169,7 @@ def jpeg(output_dir):
                     shutil.copy(image_path, f"{jpeg_dir}/{filename}")
                     # print("Stegdetect Output:\n", result)
 
-    # print("JPEG TEST DONE")
+    print("JPEG TEST DONE")
 
 
 def png(output_dir):
@@ -1224,11 +1200,12 @@ def png(output_dir):
                     f.close()
                     # print("Zsteg Output:\n", result)
 
-    # print("PNG TEST DONE")
+    print("PNG TEST DONE")
 
 
 # TODO make the mp3 to wave a funciton and not duplicated
-def audio_integrity(output_dir):  # This is checking integrity need to add one from main machine that runs ai aginst it too files
+def audio_integrity(
+        output_dir):  # This is checking integrity need to add one from main machine that runs ai aginst it too files
     mp3_dir = os.path.join(output_dir, "mp3")
     wav_dir = os.path.join(output_dir, "wav")
     if os.path.isdir(mp3_dir):
@@ -1268,7 +1245,7 @@ def audio_integrity(output_dir):  # This is checking integrity need to add one f
                     f.write(f"Number of Frames: {wav_file.getnframes()}\n")
                     f.close()
 
-    # print("AUDIO INTEGRITY TEST DONE")
+    print("AUDIO INTEGRITY TEST DONE")
 
 
 def audio_dectection(output_dir):
@@ -1339,7 +1316,7 @@ def audio_dectection(output_dir):
 
                     shutil.copy(spectrogram_path, f"{audio_dectection_dir}/{base_name}_spectrogram.png")
                     # print("Extracted Printed Text:", text_printed)
-    # print("AUDIO DECTECTION TEST DONE")
+    print("AUDIO DECTECTION TEST DONE")
 
 
 def binary(output_dir):
@@ -1363,7 +1340,7 @@ def binary(output_dir):
                     shutil.copy(file_path, f"{binary_dir}/{filename}")
                     # print("Binwalk Output:\n", result)
 
-    # print("BINARY TEST DONE")
+    print("BINARY TEST DONE")
 
 
 def elf_check(output_dir):
@@ -1402,10 +1379,430 @@ def elf_check(output_dir):
             else:
                 pass
                 # print(f"[-] {file_path} is NOT an ELF file.")
-    # print("ELF TEST DONE")
+    print("ELF TEST DONE")
 
 
 # --------------------------------------------------------------
+def open_readme():
+    webbrowser.open(README_URL)
+
+
+def add_hint(entry, hint_text):
+    if entry.get() == "":
+        entry.insert(0, hint_text)
+        entry.config(foreground="gray")
+
+
+def remove_hint(entry, hint_text):
+    if entry.get() == hint_text:
+        entry.delete(0, tk.END)
+        entry.config(foreground="white")
+
+        
+def handle_input_change(entry, hint_text):
+    if entry.get() != hint_text:
+        entry.config(foreground="white")
+        
+
+def add_context_menu(entry):
+    menu = tk.Menu(entry, tearoff=0)
+
+    def cut():
+        entry.event_generate("<<Cut>>")
+
+    def copy():
+        entry.event_generate("<<Copy>>")
+
+    def paste():
+        entry.event_generate("<<Paste>>")
+
+    menu.add_command(label="Cut", command=cut)
+    menu.add_command(label="Copy", command=copy)
+    menu.add_command(label="Paste", command=paste)
+
+    def show_menu(event):
+        try:
+            menu.tk_popup(event.x_root + 5, event.y_root + 5)
+        finally:
+            menu.grab_release()
+
+    entry.bind("<Button-3>", show_menu)
+    
+
+def create_gui():
+    root = tb.Window(themename="darkly")  # Apply dark theme
+    root.title("StegoScan")
+
+    # Load the icon image
+    response = requests.get(
+        "https://raw.githubusercontent.com/LCBOWER33/StegoScan/main/images/StegoScan_dark_logo.png",
+        timeout=5
+    )
+    response.raise_for_status()
+
+    img_data = response.content
+    img = Image.open(io.BytesIO(img_data)).convert("RGBA")
+    img = img.resize((32, 32), Image.LANCZOS)
+
+    icon_photo = ImageTk.PhotoImage(img)
+    root.icon_photo = icon_photo  # Prevent garbage collection
+    root.iconphoto(True, icon_photo)  # Works on macOS/Linux
+
+    # Make the window full screen
+    # root.attributes("-fullscreen", True)
+    root.configure(bg="#191B1D")
+    root.geometry("1050x975")  # Optional, in case you want a fallback size for non-fullscreen
+    root.resizable(True, True)
+
+    # Function to toggle full screen on Escape key press
+    def toggle_full_screen(event=None):
+        """ Toggle between full screen and windowed mode. """
+        current_state = root.attributes("-fullscreen")
+        root.attributes("-fullscreen", not current_state)
+
+    # Bind Escape key to exit full-screen mode
+    root.bind("<Escape>", toggle_full_screen)
+
+    # ASCII Banner (Ensure spacing is preserved)
+    # ascii_banner = '''  ___ _                ___
+    #  / __| |_ ___ __ _ ___/ __| __ __ _ _ _
+    #  \__ \  _/ -_) _` / _ \__ \/ _/ _` | ' \
+    #  |___/\__\___\__, \___/___/\__\__,_|_||_|
+    #              |___/                       '''
+
+    # Add a label for the ASCII banner
+    # banner_label = tk.Label(root, text=ascii_banner, font=("Courier", 10), fg="#00FF00", bg="#040D12", justify="left",
+    #                        anchor="w")
+    # banner_label.pack(pady=10)  # Adjust spacing
+
+    # Load the image
+    response = requests.get("https://raw.githubusercontent.com/LCBOWER33/StegoScan/main/images/StegoScan_dark.png")
+    response.raise_for_status()  # Raise error if failed
+
+    image_data = response.content
+    image = Image.open(io.BytesIO(image_data))
+    banner_image = image.resize((450, 112), Image.LANCZOS)  # Resize to (width, height)
+    banner_photo = ImageTk.PhotoImage(banner_image)
+    # Display it in a Label
+    banner_label = Label(root, image=banner_photo)
+    banner_label.pack(pady=10)
+
+    # Use a built-in question icon
+    help_icon = tk.PhotoImage(name="::tk::icons::question")  # try to make icon not just help
+
+    # Create a button with the help icon
+    button = ttk.Button(root, text="Help", command=open_readme, image=help_icon, compound="center")
+    button.pack(pady=20)
+
+    def select_output_dir():
+        folder_selected = filedialog.askdirectory()
+        output_entry.delete(0, tk.END)
+        output_entry.insert(0, folder_selected)
+        output_entry.config(foreground="white")  # Ensure text is white
+
+    def select_local_file():
+        def choose_file():
+            selected_path = filedialog.askopenfilename()
+            update_entry(selected_path)
+            dialog.destroy()
+
+        def choose_folder():
+            selected_path = filedialog.askdirectory()
+            update_entry(selected_path)
+            dialog.destroy()
+
+        def update_entry(selected_path):
+            if selected_path:
+                local_entry.delete(0, tk.END)
+                local_entry.insert(0, selected_path)
+                local_entry.config(foreground="white")  # Ensure text is white
+
+        dialog = Toplevel(root)
+        dialog.title("Select Option")
+        dialog.configure(bg="#222")
+        dialog.geometry("300x150")
+        dialog.grab_set()
+
+        Label(dialog, text="Select a file or folder:", foreground="#222", bg="#222", font=("Arial", 12)).pack(pady=10)
+
+        btn_frame = tb.Frame(dialog)
+        btn_frame.pack(pady=10)
+
+        tb.Button(btn_frame, text="Select File", command=choose_file, bootstyle="info-outline").pack(side="left",
+                                                                                                     padx=10)
+        tb.Button(btn_frame, text="Select Folder", command=choose_folder, bootstyle="info-outline").pack(side="left",
+                                                                                                         padx=10)
+
+    fields = [
+        ("URL(s):", "e.g. https://example.com"),
+        ("IP/IP Range(s):", "e.g. 127.0.0.1 or 127.0.0.0/24"),
+        ("Number of Downloads:", "e.g 10, if all types it will override this number"),
+        ("Max Depth:", "e.g. 2"),
+        ("Output Directory:", "Select output folder"),
+        ("Local Directory:", "Select a local file or folder"),
+    ]
+
+    entries = []
+    outer_frame = ttk.Frame(root, width=800, height=350)
+    outer_frame.pack(padx=10, pady=10)
+
+    style = ttk.Style()
+    style.configure("TFrame", background="#040D12")
+    inner_frame = ttk.Frame(outer_frame, style="TFrame", width=150, height=100)
+    inner_frame.pack(padx=20, pady=20)
+    inner_frame.grid(row=0, column=0, padx=20, pady=20)
+
+    class CheckboxGroup:
+        def __init__(self, parent, group_title, options, row, columns):
+            self.frame = ttk.LabelFrame(parent, text=group_title, padding=10)
+            self.frame.grid(row=row, column=0, columnspan=3, pady=10, sticky="ew")
+
+            self.options = options  # Store option labels
+            self.vars = []
+            self.select_all_var1 = tk.BooleanVar()
+            self.select_all_var2 = tk.BooleanVar()
+
+            label = "Select All"
+            if group_title == "File Types":
+                chk = ttk.Checkbutton(self.frame, text=label, variable=self.select_all_var2,
+                                      command=self.toggle_all_and_disable, bootstyle="primary-round-toggle")
+
+
+            else:
+                chk = ttk.Checkbutton(self.frame, text=label, variable=self.select_all_var1,
+                                      command=self.toggle_all, bootstyle="primary-round-toggle")
+            chk.grid(row=0, column=0, padx=5, pady=2, sticky="w")
+
+            for i, label in enumerate(options):
+                var = tk.BooleanVar()
+                self.vars.append(var)
+                row, col = divmod(i, columns)
+
+                chk = ttk.Checkbutton(self.frame, text=label, variable=var, bootstyle="primary-round-toggle")
+                chk.grid(row=row + 1, column=col, padx=5, pady=2, sticky="w")
+
+        def toggle_all(self):
+            state1 = self.select_all_var1.get()
+            for var in self.vars:
+                var.set(state1)
+
+        def toggle_all_and_disable(self):
+            state2 = self.select_all_var2.get()
+            for var in self.vars:
+                var.set(state2)
+            num_downloads_entry.config(state=tk.DISABLED if state2 else tk.NORMAL)
+
+        def get_selected(self):
+            """ Returns selected checkboxes, or 'all' if everything is selected """
+            selected = [label for var, label in zip(self.vars[1:], self.options) if var.get()]
+            return "all" if len(selected) + 1 == len(self.options) else selected
+
+    labels = {
+        "Tests": ["lsb", "jpeg", "image_integrity", "audio_integrity", "object_detection", "binary", "elf_check", "png",
+                  "hist", "audio_detection"],
+        "File Types": ["png", "jpg", "jpeg", "pdf", "docx", "mp3", "wav", "bin"]
+    }
+
+    groups = []
+    for row, (title, options) in enumerate(labels.items()):
+        groups.append(CheckboxGroup(inner_frame, title, options, row, 7 if row == 0 else 10))
+
+    for i, (label_text, hint_text) in enumerate(fields):
+        label = ttk.Label(inner_frame, text=label_text, font=("Arial", 11), foreground="#3498DB", background="#040D12")
+        label.grid(row=i + 2, column=0, padx=0, pady=8, sticky="w")
+
+        entry = ttk.Entry(inner_frame, width=40)
+        entry.grid(row=i + 2, column=1, padx=0, pady=5, ipady=5)
+        entry.insert(0, hint_text)
+        entry.config(foreground="gray")
+        entry.bind("<FocusIn>", lambda e, entry=entry, hint_text=hint_text: remove_hint(entry, hint_text))
+        entry.bind("<FocusOut>", lambda e, entry=entry, hint_text=hint_text: add_hint(entry, hint_text))
+        entry.bind("<<Paste>>", lambda e, entry=entry, hint_text=hint_text: handle_input_change(entry, hint_text))
+        entry.bind("<KeyRelease>", lambda e, entry=entry, hint_text=hint_text: handle_input_change(entry, hint_text))
+
+
+        add_context_menu(entry)
+
+        entries.append(entry)
+
+    output_entry, local_entry, num_downloads_entry = entries[4], entries[5], entries[2]
+
+    ttk.Button(inner_frame, text="Browse", command=select_output_dir, bootstyle="info-outline", width=12).grid(row=6,
+                                                                                                               column=2,
+                                                                                                               padx=8)
+    ttk.Button(inner_frame, text="Browse", command=select_local_file, bootstyle="info-outline", width=12).grid(row=7,
+                                                                                                               column=2,
+                                                                                                               padx=8)
+
+    submit_btn = ttk.Button(inner_frame, text="Submit", command=lambda: start_progress(), bootstyle="success-outline",
+                            width=16)  # need to also get the checkbox results
+    submit_btn.grid(row=10, column=0, columnspan=3, pady=15)
+
+    # Progress Bar Section (Initially Hidden)
+    progress_frame = ttk.Frame(inner_frame)  # Now correctly placed inside main_frame
+    progress_bar = ttk.Progressbar(progress_frame, mode="determinate", length=500, bootstyle="info-striped")
+    progress_label = ttk.Label(progress_frame, text="Processing...", bootstyle="info", background="#040D12")
+
+    def start_progress():
+        global results_folder
+        """ Starts the progress bar """
+        progress_frame.grid(row=len(labels) + 9, column=0, columnspan=3,
+                            pady=10)  # Show progress bar BELOW the submit button
+        progress_bar.grid(row=0, column=0, padx=10, pady=5)
+        progress_label.grid(row=1, column=0, padx=10, pady=5)
+        progress_bar["value"] = 0
+    
+        # Collect selected options from each group
+        results = {group.frame.cget("text"): group.get_selected() for group in groups}
+
+        # Print checkbox selections
+        print("Selected Values:", results)
+        test_modes = results["Tests"]
+        file_types = "*" if results["File Types"] == "all" else results["File Types"]
+        print(test_modes)
+        print(file_types)
+
+        # Collect entry values while filtering out hint text
+        values = [entry.get() if entry.get() not in [field[1] for field in fields] else "" for entry in entries]
+        print("Submitted Values:", values)
+        url = [values[0]]
+        ip = values[1]
+        num_files = values[2]
+        max_depth = int(values[3])
+        output_dir = values[4]
+        local_dir = values[5]
+        print(url, ip, num_files, max_depth, output_dir, local_dir)
+        
+        num_files = 10 if num_files == '' else int(num_files)
+
+
+        # TODO MAKE IT RUN THE TEST NOW
+        # output_dir = os.path.abspath(args.output)
+        os.makedirs(output_dir, exist_ok=True)
+
+        if local_dir != "":
+            copy_local_files(local_dir, output_dir)
+
+        print("URL NULL: ", url != "", type(url))
+
+        if url != "":
+            print("IN URL")
+            sources = []
+            for u in url:
+                if re.match(r'\d+\.\d+\.\d+\.\d+', u):  # Single IP
+                    if is_web_server(u):
+                        sources.append(f"http://{u}/")
+                elif re.match(r'^\d+\.\d+\.\d+\.\d+/\d+$', u):  # IP range
+                    sources.extend([f"http://{ip}/" for ip in process_ip_range(u)])
+                else:
+                    sources.append(u if u.startswith("http") else f"http://{u}/")
+            print("PAST IP")
+
+            threads = []
+            temp_file_types = file_types.lower().split(',') if file_types != '*' else []
+            print("PAST TYPES")
+
+            # For some reason this is not running, only dif is the output_dir is full path
+            source_count = 0
+            for source in sources:
+                #update_progress(source_count, len(sources))
+                source_count += 1
+                thread = threading.Thread(target=download_from_source,
+                                          args=(source, temp_file_types, num_files, file_types == '*', output_dir, set(), max_depth))
+                thread.start()
+                threads.append(thread)
+
+            for thread in threads:
+                thread.join()
+
+        pdf_dir = os.path.join(output_dir, "pdf")
+        docx_dir = os.path.join(output_dir, "docx")
+        if os.path.exists(pdf_dir) or os.path.exists(docx_dir):
+            # if "pdf" in file_types or "docx" in file_types:
+            # print("IN TYPES CHECK")
+            extract_from_file(output_dir)
+            # pass
+
+        jpeg_dir = os.path.join(output_dir, "jpeg")
+        if os.path.exists(jpeg_dir):
+            jpg_dir = os.path.join(output_dir, "jpg")
+            os.makedirs(jpg_dir, exist_ok=True)
+            for filename in os.listdir(jpeg_dir):
+                f = os.path.join(jpeg_dir, filename)
+                # checking if it is a file
+                if os.path.isfile(f):
+                    print(f)
+                    image_path = f
+                    print(f"{jpg_dir}/{filename}")
+                    shutil.copy(image_path, f"{jpg_dir}/{filename}")
+        # shutil.copytree(jpeg_dir, jpg_dir, dirs_exist_ok=True)
+
+        process_images(output_dir)
+        
+        clean_up_folder(output_dir)
+
+        # Generate a unique folder name using the current timestamp
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        results_folder_tmp = f"results_{timestamp}"
+
+        # Create the unique results folder if it doesn't exist
+        results_folder = os.path.join(output_dir, results_folder_tmp)
+        os.makedirs(results_folder, exist_ok=True)
+
+        all_test = test_modes == "all"
+        
+        print("OUTOUT DIR IS HERE:", output_dir)
+
+        # Mapping test modes to their respective functions
+        mode_actions = {
+            "lsb": lambda: t_lsb(output_dir),
+            "image_integrity": lambda: image_integrity(output_dir),
+            "hist": lambda: hist(output_dir),
+            "object_detection": lambda: object_detection(output_dir),
+            "jpeg": lambda: jpeg(output_dir),
+            "png": lambda: png(output_dir),
+            "audio_integrity": lambda: audio_integrity(output_dir),
+            "audio_dectection": lambda: audio_dectection(output_dir),
+            "binary": lambda: binary(output_dir),
+            "elf_check": lambda: elf_check(output_dir),
+        }
+        
+        test_count = 0
+        if "all" in test_modes:
+            # print("we are in all")
+            # Run all tests once and exit
+            for action in mode_actions.values():  # for some reason we are getting stuck here
+                # print(test_count, len(mode_actions.values()))
+                update_progress(test_count, len(mode_actions.values()))
+                test_count += 1
+                action()
+            return
+        else:
+            for mode in test_modes:
+                action = mode_actions.get(mode)
+                if action:
+                    # print("WE ARE IN ACTION")
+                    update_progress(test_count, len(test_modes))
+                    test_count += 1
+                    action()
+                else:
+                    print(f"INVALID TEST MODE: {mode}")
+
+
+    def update_progress(current_value, max_value):
+        """ Updates progress bar smoothly over 10 seconds """
+        if current_value < max_value:
+            # current_value += 1
+            current_percentage = ((current_value) / max_value) * 100
+            progress_bar["value"] = current_percentage
+            #root.after(max_value, update_progress, current_value)  # Update every 100ms (10s total)
+            root.update_idletasks()
+        else:
+            progress_frame.grid_forget()  # Hide after completion
+
+    root.mainloop()
+
+
 def main():
     global results_folder
     parser = argparse.ArgumentParser(description="Download specific or all file types from a webpage.")
@@ -1454,12 +1851,15 @@ def main():
 
     if len(sys.argv) == 1:
         print("No arguments provided. Load GUI...")
+        create_gui()
     else:
         output_dir = os.path.abspath(args.output)
         os.makedirs(output_dir, exist_ok=True)
 
         if args.local:
             copy_local_files(args.local, output_dir)
+            
+        print("URL NULL: ", args.url != "", type(args.url))
 
         if args.url:
             sources = []
@@ -1510,6 +1910,8 @@ def main():
         # shutil.copytree(jpeg_dir, jpg_dir, dirs_exist_ok=True)
 
         process_images(output_dir)
+        
+        clean_up_folder(output_dir)
 
         # Generate a unique folder name using the current timestamp
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -1521,6 +1923,8 @@ def main():
 
         all_test = args.mode == "all"
         test_modes = "all" if all_test else args.mode.lower().split(',')
+        
+        print("OUTOUT DIR IS HERE:", output_dir)
 
         # Mapping test modes to their respective functions
         mode_actions = {
@@ -1539,11 +1943,11 @@ def main():
         if "all" in test_modes:
             # print("we are in all")
             # Run all tests once and exit
-            for action in tqdm(mode_actions.values()):
+            for action in mode_actions.values():
                 action()
             return
         else:
-            for mode in tqdm(test_modes):
+            for mode in test_modes:
                 action = mode_actions.get(mode)
                 if action:
                     action()
@@ -1554,9 +1958,12 @@ def main():
 
 
 if __name__ == "__main__":
-    # sudo python stegoScan.py -u "https://www.uah.edu" -t "pdf,jpg,png" -n 1 -o "downloads" -m "all"
-    # sudo python stegoScan.py -l "downloads" -t "*" -n 1 -o "downloads" -m "all"
-    # sudo python stegoScan.py -u "https://en.wikipedia.org/wiki/Steganography" -t "*" -o "Out" -m "all"
+    print(len(sys.argv))
+    # sudo python StegoScan.py -u "https://www.uah.edu" -t "pdf,jpg,png" -n 1 -o "downloads" -m "all"
+    # sudo python StegoScan.py -l "downloads" -t "*" -n 1 -o "downloads" -m "all"
+    # sudo python StegoScan.py -u "https://en.wikipedia.org/wiki/Steganography" -t "*" -o "Out" -m "all" --max_depth 0
+    # sudo python StegoScan.py -u "https://en.wikipedia.org/wiki/Steganography" -t "*" -o "/home/kali/Desktop/output_test" -m "all" --max_depth 0
+    # sudo python StegoScan.py -l "output_test" -t "*" -n 1 -o "output_test" -m "png"
 
     # save download history to a txt, scan your own google drive?
 
@@ -1565,7 +1972,7 @@ if __name__ == "__main__":
     # add in an output for detections and not etc for each test
 
     # add in levels of verbosity
-
-    # add in gui
+    
+    # pdf extraction is in the wrong directory
 
     main()
