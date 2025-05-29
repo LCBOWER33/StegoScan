@@ -163,19 +163,13 @@ The script installs poppler-utils, stegdetect, binwalk, and zsteg automatically.
 
 GPU acceleration is used if a CUDA-compatible GPU is detected.
 
-# Future Enhancements - Anticipated completion date: May 2025
-
-Create GUI implementation if no command-line arguments are supplied. 
+# Future Enhancements
 
 Expand the test to include Exiftool, StegSeek, StegExpose, OutGuess, StegoRAT, StegoSuite, and WavSteg.
-
-Expand to a web crawler and allow for different search depths. 
 
 Expand malware analysis with more YARA rules.
 
 Improve object detection using advanced image processing techniques.
-
-Expand to Google Drive scanning.
 
 # Background and Rational of StegoScan
 
