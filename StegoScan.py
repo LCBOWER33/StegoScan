@@ -4,8 +4,52 @@ import sys
 import subprocess
 import platform
 import venv
+import threading
 
 VENV_DIR = "myenv"  # Name of the virtual environment folder
+
+# Thread-safe print with color
+print_lock = threading.Lock()
+
+def prRed(skk):
+    with print_lock:
+        print("\033[91m{}\033[00m".format(skk))
+
+
+def prGreen(skk): 
+    with print_lock:
+        print("\033[92m{}\033[00m".format(skk))
+
+
+def prYellow(skk):
+    with print_lock:
+        print("\033[93m{}\033[00m".format(skk))
+
+
+def prLightPurple(skk):
+    with print_lock:
+        print("\033[94m{}\033[00m".format(skk))
+
+
+def prPurple(skk):
+    with print_lock:
+        print("\033[95m{}\033[00m".format(skk))
+
+
+def prCyan(skk):
+    with print_lock:
+        print("\033[96m{}\033[00m".format(skk))
+
+
+def prLightGray(skk):
+    with print_lock:
+        print("\033[97m{}\033[00m".format(skk))
+
+
+def prBlack(skk):
+    with print_lock:
+        print("\033[98m{}\033[00m".format(skk))
+
 
 # Required third-party packages with corresponding pip names
 required_packages = {
@@ -68,36 +112,15 @@ def install_linux_dependencies():
     if platform.system() == "Linux":
         try:
             subprocess.run(["dpkg", "-s", "poppler-utils"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            print("poppler-utils is already installed.")
+            prGreen("poppler-utils is already installed.")
         except subprocess.CalledProcessError as e:
             print("poppler-utils is not installed or not detected. Attempting to install...")
             try:
                 subprocess.check_call(["sudo", "apt-get", "update"])
                 subprocess.check_call(["sudo", "apt-get", "install", "-y", "poppler-utils"])
-                print("poppler-utils has been successfully installed.")
+                prGreen("poppler-utils has been successfully installed.")
             except subprocess.CalledProcessError as install_error:
-                print(f"Failed to install poppler-utils. Error: {install_error}")
-
-
-def configure_windows_poppler():
-    """Ensure Windows-specific Poppler setup is correct."""
-    if platform.system() == "Windows":
-        poppler_url = "https://github.com/oschwartz10612/poppler-windows/releases"
-        print(f"On Windows: pdf2image requires Poppler. Download it from {poppler_url} and extract it.")
-
-        # Common paths where Poppler might be installed
-        possible_paths = [
-            r"C:\Program Files\poppler-23.11.0\Library\bin",
-            r"C:\Users\%USERNAME%\Downloads\poppler-23.11.0\Library\bin"
-        ]
-
-        for path in possible_paths:
-            if os.path.exists(path):
-                print(f"Setting Poppler path: {path}")
-                os.environ["PATH"] += os.pathsep + path
-                return
-
-        print("Warning: Poppler is not found. Please install and add it to PATH manually.")
+                prRed(f"Failed to install poppler-utils. Error: {install_error}")
 
 
 def run_script_in_venv():
@@ -106,14 +129,14 @@ def run_script_in_venv():
 
     # Avoid infinite loops by checking if we're already inside the venv
     if sys.prefix == os.path.abspath(VENV_DIR):  # Already inside the venv
-        print("Script is already running inside the virtual environment.")
+        prGreen("Script is already running inside the virtual environment.")
         return  # Do nothing, exit the function
 
     print(f"Running script inside virtual environment: {VENV_DIR}")
 
     # Ensure that the python executable exists
     if not os.path.isfile(python_exec):
-        print(f"Error: Python executable not found at {python_exec}")
+        prRed(f"Error: Python executable not found at {python_exec}")
         sys.exit(1)
 
     # Build the command to restart the script inside the virtual environment
@@ -126,7 +149,7 @@ def run_script_in_venv():
         print(f"Restarting the script with command: {command}")
         subprocess.check_call(command, cwd=script_dir, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
-        print(f"Error during restart: {e}")
+        prRed(f"Error during restart: {e}")
         sys.exit(1)
 
     sys.exit()  # Ensure the script exits after launching the new one
@@ -136,7 +159,7 @@ def run_script_in_venv():
 create_virtual_env()
 run_script_in_venv()  # Relaunch in venv if needed
 install_linux_dependencies()
-configure_windows_poppler()
+# configure_windows_poppler()
 install_missing_packages()
 
 import warnings
@@ -163,7 +186,8 @@ import argparse
 import requests
 import shutil
 import ipaddress
-import threading
+import multiprocessing
+from concurrent.futures import ThreadPoolExecutor
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, unquote, urlparse
 import re
@@ -206,6 +230,11 @@ from PIL import Image, ImageTk
 import requests
 import io
 import tempfile
+
+
+cv2.setNumThreads(max(1, os.cpu_count() - 1))
+
+print(f"[INFO] OpenCV will use {cv2.getNumThreads()} threads")
 
 # Check if CUDA (GPU) is available, otherwise fallback to CPU
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -251,6 +280,24 @@ results_folder = ""
 # GitHub README URL
 README_URL = "https://github.com/LCBOWER33/StegoScan/blob/main/README.md"
 
+max_threads = max(1, multiprocessing.cpu_count() - 1)
+semaphore = threading.Semaphore(max_threads)
+
+
+def open_directory(path):
+    """Opens the specified directory in the system's file explorer."""
+    if os.path.exists(path):
+        if os.name == 'nt':  # Windows
+            subprocess.Popen(f'explorer "{path}"')
+        elif os.name == 'posix':  # macOS / Linux
+            subprocess.Popen(['open', path])  # For macOS
+            # subprocess.Popen(['xdg-open', path])  # For Linux
+    else:
+        prRed(f"Directory not found: {path}")
+# Example usage:
+directory_path = "/home/kali/Desktop/riley_output/results_20250501_175944"  # Replace with the actual path
+# open_directory(directory_path)
+
 
 def run_silent_command(command):
     """Run a shell command silently, capturing output but not displaying it."""
@@ -261,56 +308,13 @@ def run_silent_command(command):
         return None
 
 
-def is_wsl_installed():
-    """Check if WSL is installed on Windows (silently)."""
-    return bool(run_silent_command("wsl --version"))
-
-
-def install_wsl():
-    """Install WSL silently and prompt for restart."""
-    # print("Installing WSL and Ubuntu silently...")
-    run_silent_command("wsl --install -d Ubuntu")
-    # print("WSL installed. Please restart your computer and run the script again.")
-    exit(0)
-
-
-def is_tool_installed(tool):
-    """Check if a tool (stegdetect or zsteg) is installed in WSL."""
-    return bool(run_silent_command(f"wsl which {tool}"))
-
-
-def install_stegdetect():  # need to also do it for linux in general
-    """Install stegdetect inside WSL silently."""
-    # print("Installing stegdetect in WSL...")
-    run_silent_command("wsl sudo apt update -y > /dev/null 2>&1")
-    run_silent_command("wsl sudo apt install -y stegdetect > /dev/null 2>&1")
-    # print("stegdetect installed successfully in WSL!")
-
-
-def install_zsteg():
-    """Install zsteg inside WSL silently."""
-    # print("Installing zsteg in WSL...")
-    run_silent_command("wsl sudo apt update -y > /dev/null 2>&1")
-    run_silent_command("wsl sudo apt install -y ruby > /dev/null 2>&1")
-    run_silent_command("wsl sudo gem install zsteg > /dev/null 2>&1")
-    # print("zsteg installed successfully in WSL!")
-
-
-def install_binwalk():
-    """Install binwalk inside WSL silently."""
-    # print("Installing binwalk in WSL...")
-    run_silent_command("wsl sudo apt update -y > /dev/null 2>&1")
-    run_silent_command("wsl sudo apt install -y binwalk > /dev/null 2>&1")
-    # print("binwalk installed successfully in WSL!")
-
-
 def check_and_install_poppler():
     if platform.system() != "Linux":
-        print("This script is intended for Linux systems only.")
+        prRed("This script is intended for Linux systems only.")
         return
 
     if shutil.which("pdftoppm"):
-        print("Poppler is already installed.")
+        prGreen("Poppler is already installed.")
         return
 
     print("Poppler is not installed. Installing now...")
@@ -327,12 +331,12 @@ def check_and_install_poppler():
         elif "fedora" in distro:
             subprocess.run(["sudo", "dnf", "install", "-y", "poppler-utils"], check=True)
         else:
-            print("Unsupported Linux distribution. Please install poppler-utils manually.")
+            prRed("Unsupported Linux distribution. Please install poppler-utils manually.")
             return
 
-        print("Poppler installed successfully.")
+        prGreen("Poppler installed successfully.")
     except subprocess.CalledProcessError as e:
-        print(f"Error installing Poppler: {e}")
+        prRed(f"Error installing Poppler: {e}")
 
 
 def get_wikipedia_image(url):
@@ -347,7 +351,7 @@ def get_wikipedia_image(url):
             if image_link and 'href' in image_link.attrs:
                 return urljoin(url, image_link['href'])
     except requests.RequestException as e:
-        print(f"Failed to get direct Wikipedia image URL from {url}: {e}")
+        prRed(f"Failed to get direct Wikipedia image URL from {url}: {e}")
     return None
 
 
@@ -364,11 +368,11 @@ def download_file(url, output_dir):
             if direct_url:
                 url = direct_url
             else:
-                print(f"Skipping Wikipedia file page: {url}")
+                prRed(f"Skipping Wikipedia file page: {url}")
                 return
 
         if not is_valid_url(url):
-            print(f"Invalid URL skipped: {url}")
+            prRed(f"Invalid URL skipped: {url}")
             return
 
         response = requests.get(url, stream=True, timeout=5)
@@ -388,9 +392,9 @@ def download_file(url, output_dir):
         with open(output_path, 'wb') as file:
             for chunk in response.iter_content(chunk_size=8192):
                 file.write(chunk)
-        print(f"Downloaded: {url} -> {output_path}")
+        prGreen(f"Downloaded: {url} -> {output_path}")
     except requests.RequestException as e:
-        print(f"Failed to download {url}: {e}")
+        prRed(f"Failed to download {url}: {e}")
 
 
 def get_file_links(url, file_types, limit, all_files):
@@ -421,7 +425,7 @@ def get_file_links(url, file_types, limit, all_files):
 
         return list(links)[:limit] if not all_files else list(links)
     except requests.RequestException as e:
-        print(f"Failed to fetch links from {url}: {e}")
+        prRed(f"Failed to fetch links from {url}: {e}")
         return []
 
 
@@ -445,7 +449,7 @@ def copy_local_files(source, destination):
         shutil.copy(source, full_destination_path)
         # print(f"Copied: {source} -> {full_destination_path}")
     else:
-        print(f"Invalid local path: {source}")
+        prRed(f"Invalid local path: {source}")
 
 
 def is_web_server(ip):
@@ -467,7 +471,7 @@ def download_from_source(source, file_types, limit, all_files, output_dir, visit
     print("IN DOWNLOAD FROM SOURCE")
 
     visited_urls.add(source)
-    print(f"Crawling: {source} (Depth {depth})")
+    prGreen(f"Crawling: {source} (Depth {depth})")
 
     file_links = get_file_links(source, file_types, limit, all_files)
     for file_url in file_links:
@@ -485,7 +489,12 @@ def download_from_source(source, file_types, limit, all_files, output_dir, visit
                 download_from_source(full_url, file_types, limit, all_files, output_dir, visited_urls, max_depth,
                                      depth + 1)
     except requests.RequestException as e:
-        print(f"Failed to crawl {source}: {e}")
+        prRed(f"Failed to crawl {source}: {e}")
+        
+
+def threaded_download(source, *args):
+    with semaphore:
+        download_from_source(source, *args)
 
 
 def calculate_image_entropy(image):
@@ -520,7 +529,7 @@ def extract_images_from_pdf(pdf_path, output_folder, min_width=50, min_height=50
     try:
         doc = fitz.open(pdf_path)
     except Exception as e:
-        print(f"Error opening PDF: {e}")
+        prRed(f"Error opening PDF: {e}")
         return
 
     image_count = 0
@@ -567,11 +576,11 @@ def extract_images_from_pdf(pdf_path, output_folder, min_width=50, min_height=50
                     image_file.write(image_bytes)
 
                 image_count += 1
-                print(f"Extracted: {image_path} (Entropy: {entropy:.2f}, {width}x{height})")
+                prGreen(f"Extracted: {image_path} (Entropy: {entropy:.2f}, {width}x{height})")
             except Exception as e:
-                print(f"Error extracting image on page {page_number + 1}: {e}")
+                prRed(f"Error extracting image on page {page_number + 1}: {e}")
 
-    print(f"Total images extracted: {image_count}")
+    prGreen(f"Total images extracted: {image_count}")
 
 
 def extract_images_from_docx(docx_path, output_dir):
@@ -602,7 +611,7 @@ def extract_from_file(output_dir):
         # checking if it is a file
         # print("IN PDF")
         if os.path.isfile(f):
-            print(f)
+            prGreen(f)
             extract_images_from_pdf(f, output_dir)
 
     # print("OUT")
@@ -617,7 +626,7 @@ def extract_from_file(output_dir):
 
 def clean_up_folder(target_dir):
     if not os.path.isdir(target_dir):
-        print(f"'{target_dir}' is not a valid directory.")
+        prRed(f"'{target_dir}' is not a valid directory.")
         return
 
     for filename in os.listdir(target_dir):
@@ -822,7 +831,7 @@ def is_elf_using_magic(filepath):
             magic = f.read(4)
         return magic == b'\x7FELF'
     except Exception as e:
-        print(f"Error reading file: {e}")
+        prRed(f"Error reading file: {e}")
         return False
 
 
@@ -832,7 +841,7 @@ def check_with_file_command(filepath):
         result = subprocess.run(["file", "-b", filepath], capture_output=True, text=True)
         return "ELF" in result.stdout
     except Exception as e:
-        print(f"Error running file command: {e}")
+        prRed(f"Error running file command: {e}")
         return False
 
 
@@ -846,7 +855,7 @@ def calculate_entropy(filepath):
         entropy = -sum((count / total) * math.log2(count / total) for count in counter.values())
         return entropy
     except Exception as e:
-        print(f"Error calculating entropy: {e}")
+        prRed(f"Error calculating entropy: {e}")
         return 0
 
 
@@ -855,45 +864,45 @@ def run_exiftool(image_path):
     """Run exiftool and capture output."""
     result = run_silent_command(f"exiftool '{image_path}'")
     if result:
-        print("ExifTool Output:\n", result)
+        prGreen("ExifTool Output:\n", result)
     else:
-        print("ExifTool: No metadata found or failed.")
+        prRed("ExifTool: No metadata found or failed.")
 
 
 def run_stegseek(image_path):
     """Run stegseek and capture output."""
     result = run_silent_command(f"stegseek '{image_path}'")
     if result:
-        print("StegSeek Output:\n", result)
+        prGreen("StegSeek Output:\n", result)
     else:
-        print("StegSeek: No hidden data found or failed.")
+        prRed("StegSeek: No hidden data found or failed.")
 
 
 def run_stegexpose(image_path):
     """Run stegexpose and capture output."""
     result = run_silent_command(f"stegexpose '{image_path}'")
     if result:
-        print("StegExpose Output:\n", result)
+        prGreen("StegExpose Output:\n", result)
     else:
-        print("StegExpose: No hidden data found or failed.")
+        prRed("StegExpose: No hidden data found or failed.")
 
 
 def run_stegorat(file_path):
     """Run stego-rat and capture output."""
     result = run_silent_command(f"stegorat '{file_path}'")
     if result:
-        print("StegoRAT Output:\n", result)
+        prGreen("StegoRAT Output:\n", result)
     else:
-        print("StegoRAT: No data found or failed.")
+        prRed("StegoRAT: No data found or failed.")
 
 
 def run_stegosuite(image_path):
     """Run stegosuite and capture output."""
     result = run_silent_command(f"stegosuite '{image_path}'")
     if result:
-        print("StegoSuite Output:\n", result)
+        prGreen("StegoSuite Output:\n", result)
     else:
-        print("StegoSuite: No data found or failed.")
+        prRed("StegoSuite: No data found or failed.")
 
 
 def extract_and_crack_wavsteg(input_wav, output_dir):
@@ -909,9 +918,9 @@ def extract_and_crack_wavsteg(input_wav, output_dir):
         print(f"Extracting data from {input_wav}...")
         extract_command = f"wavsteg -x {input_wav} -o {extracted_file}"
         subprocess.run(extract_command, shell=True, check=True)
-        print(f"Data extraction complete: {extracted_file}")
+        prGreen(f"Data extraction complete: {extracted_file}")
     except subprocess.CalledProcessError as e:
-        print(f"Error extracting data: {e}")
+        prRed(f"Error extracting data: {e}")
         return
 
     # Step 2: Create the hash file for John the Ripper (using the extracted data)
@@ -920,9 +929,9 @@ def extract_and_crack_wavsteg(input_wav, output_dir):
         hash_file = os.path.join(output_dir, "hash.txt")
         hash_command = f"john --format=raw-md5 {extracted_file} --wordlist=/path/to/rockyou.txt"
         subprocess.run(hash_command, shell=True, check=True)
-        print("John the Ripper hash file created.")
+        prGreen("John the Ripper hash file created.")
     except subprocess.CalledProcessError as e:
-        print(f"Error creating hash file: {e}")
+        prRed(f"Error creating hash file: {e}")
         return
 
     # Step 3: Use John the Ripper to attempt cracking
@@ -936,17 +945,17 @@ def extract_and_crack_wavsteg(input_wav, output_dir):
         result = subprocess.run(check_command, shell=True, capture_output=True, text=True)
 
         if result.stdout:
-            print("Password found! Cracking successful.")
+            prGreen("Password found! Cracking successful.")
             cracked_file = os.path.join(output_dir, "cracked_data.bin")
             # Save the cracked file (assumes the password is in the output of john)
             with open(cracked_file, "wb") as f:
                 f.write(result.stdout.encode())
-            print(f"Cracked file saved to {cracked_file}")
+            prGreen(f"Cracked file saved to {cracked_file}")
         else:
-            print("Password not found. Cracking failed.")
+            prRed("Password not found. Cracking failed.")
 
     except subprocess.CalledProcessError as e:
-        print(f"Error during cracking: {e}")
+        prRed(f"Error during cracking: {e}")
         return
 
 
@@ -955,92 +964,46 @@ def extract_and_crack_wavsteg(input_wav, output_dir):
 
 # TODO add in the new test and replace one old
 def t_lsb(output_dir):
+    def process_file(f, filename):
+        try:
+            hidden_message = lsb.reveal(f)
+            lsb_dir = os.path.join(results_folder, "lsb")
+            os.makedirs(lsb_dir, exist_ok=True)
+            shutil.copy(f, os.path.join(lsb_dir, filename))
+            prGreen(f"[LSB] Hidden message detected in {filename}")
+        except:
+            pass
+
     png_dir = os.path.join(output_dir, "png")
     if os.path.isdir(png_dir):
-        for filename in tqdm(os.listdir(png_dir), desc="LSB test: "):
-            f = os.path.join(png_dir, filename)
-            # checking if it is a file
-            if os.path.isfile(f):
-                converted_file = f.replace("\\", "/")
-                # print(converted_file)
-
-                # Try to extract hidden message
-                try:
-                    hidden_message = lsb.reveal(converted_file)
-                    lsb_dir = os.path.join(results_folder, "lsb")
-                    os.makedirs(lsb_dir, exist_ok=True)
-
-                    shutil.copy(converted_file, f"{lsb_dir}/{filename}")
-                    # print("Hidden message detected:", hidden_message)
-                except Exception as e:
-                    pass
-                    # print(e)
-
-    print("LSB TEST DONE")
+        files = [f for f in os.listdir(png_dir) if os.path.isfile(os.path.join(png_dir, f))]
+        with ThreadPoolExecutor(max_workers=os.cpu_count() - 1) as executor:
+            for filename in tqdm(files, desc="LSB test: "):
+                f = os.path.join(png_dir, filename)
+                executor.submit(process_file, f, filename)
+    prGreen("LSB TEST DONE")
 
 
 def image_integrity(output_dir):
-    png_dir = os.path.join(output_dir, "png")
-    if os.path.isdir(png_dir):
-        for filename in tqdm(os.listdir(png_dir), desc="Image integrity PNG test: "):
-            f = os.path.join(png_dir, filename)
-            # checking if it is a file
-            if os.path.isfile(f):
-                # print(f)
-                image_path = f
+    def verify_image(f, filename, ext):
+        try:
+            with Image.open(f) as img:
+                img.verify()
+        except Exception:
+            dest_dir = os.path.join(results_folder, "image_integrity")
+            os.makedirs(dest_dir, exist_ok=True)
+            shutil.copy(f, os.path.join(dest_dir, filename))
+            prGreen(f"[INTEGRITY] Corrupted or suspicious image: {filename}")
 
-                # Check if the file is actually an image
-                image_type = imghdr.what(image_path)
-                if image_type:
-                    pass
-                    # print(f"Image type detected: {image_type}")
-                else:
-                    pass
-                    # print("File is not a valid image.")
-
-                # Check for anomalies in the image
-                try:
-                    with Image.open(image_path) as img:
-                        img.verify()  # Verifies if the file is corrupted
-                        # print("Image structure is intact")
-                except Exception as e:
-                    image_integrity_dir = os.path.join(results_folder, "image_integrity")
-                    os.makedirs(image_integrity_dir, exist_ok=True)
-
-                    shutil.copy(image_path, f"{image_integrity_dir}/{filename}")
-                    # print("Image might be altered:", e)
-
-        jpg_dir = os.path.join(output_dir, "jpg")
-        if os.path.isdir(jpg_dir):
-            for filename in tqdm(os.listdir(jpg_dir), desc="Image integrity JPG test: "):
-                f = os.path.join(jpg_dir, filename)
-                # checking if it is a file
-                if os.path.isfile(f):
-                    # print(f)
-                    image_path = f
-
-                    # Check if the file is actually an image
-                    image_type = imghdr.what(image_path)
-                    if image_type:
-                        pass
-                        # print(f"Image type detected: {image_type}")
-                    else:
-                        pass
-                        # print("File is not a valid image.")
-
-                    # Check for anomalies in the image
-                    try:
-                        with Image.open(image_path) as img:
-                            img.verify()  # Verifies if the file is corrupted
-                            # print("Image structure is intact")
-                    except Exception as e:
-                        image_integrity_dir = os.path.join(results_folder, "image_integrity")
-                        os.makedirs(image_integrity_dir, exist_ok=True)
-
-                        shutil.copy(image_path, f"{image_integrity_dir}/{filename}")
-                        # print("Image might be altered:", e)
-
-    print("IMAGE INTEGRITY TEST DONE")
+    for ext in ["png", "jpg"]:
+        dir_path = os.path.join(output_dir, ext)
+        if os.path.isdir(dir_path):
+            files = [f for f in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, f))]
+            with ThreadPoolExecutor(max_workers=os.cpu_count() - 1) as executor:
+                for filename in tqdm(files, desc=f"Image integrity {ext.upper()} test: "):
+                    f = os.path.join(dir_path, filename)
+                    executor.submit(verify_image, f, filename, ext)
+    prGreen("IMAGE INTEGRITY TEST DONE")
 
 
 def object_detection(output_dir):
@@ -1103,48 +1066,28 @@ def object_detection(output_dir):
     print("OBJECT DECTECTION TEST DONE")
 
 
-def hist(output_dir):  # will need to automate this
+def hist(output_dir):
+    def process_image(f, filename):
+        image = cv2.imread(f, cv2.IMREAD_GRAYSCALE)
+        if image is not None:
+            plt.hist(image.ravel(), bins=256, range=[0, 256])
+            plt.title("Histogram")
+            plt.savefig(os.path.join(hist_dir, f"{filename}_histogram.png"))
+            plt.close()
+            prGreen(f"[HIST] Saved histogram for {filename}")
+
     hist_dir = os.path.join(results_folder, "hist")
     os.makedirs(hist_dir, exist_ok=True)
-    
-    print("OUTOUT DIR IS HERE:", output_dir)
-    print("RESULTS DIR IS HERE:", results_folder)
 
-    png_dir = os.path.join(output_dir, "png")
-    if os.path.isdir(png_dir):
-        for filename in tqdm(os.listdir(png_dir), desc="Histogram PNG test: "):
-            f = os.path.join(png_dir, filename)
-            # checking if it is a file
-            if os.path.isfile(f):
-                # print(f)
-                image_path = f
-                image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-
-                plt.hist(image.ravel(), bins=256, range=[0, 256])
-                plt.title("Histogram of Pixel Intensities")
-                # Save the histogram as a PNG file
-                print(f"{hist_dir}/{filename}_histogram.png")
-                plt.savefig(f"{hist_dir}/{filename}_histogram.png")
-                plt.close()  # Close the current figure
-                # plt.show()  # need to just save the hist for later inspection, make a hist folder and then save them there
-
-    jpg_dir = os.path.join(output_dir, "jpg")
-    if os.path.isdir(jpg_dir):
-        for filename in tqdm(os.listdir(jpg_dir), desc="Histogram JPG test: "):
-            f = os.path.join(jpg_dir, filename)
-            # checking if it is a file
-            if os.path.isfile(f):
-                # print(f)
-                image_path = f
-                image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-
-                plt.hist(image.ravel(), bins=256, range=[0, 256])
-                plt.title("Histogram of Pixel Intensities")
-                # Save the histogram as a PNG file
-                plt.savefig(f"{hist_dir}/{filename}_histogram.png")
-                # plt.show()
-
-    print("HIST TEST DONE")
+    for ext in ["png", "jpg"]:
+        dir_path = os.path.join(output_dir, ext)
+        if os.path.isdir(dir_path):
+            files = [f for f in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, f))]
+            with ThreadPoolExecutor(max_workers=os.cpu_count() - 1) as executor:
+                for filename in tqdm(files, desc=f"Histogram {ext.upper()} test: "):
+                    f = os.path.join(dir_path, filename)
+                    executor.submit(process_image, f, filename)
+    prGreen("HIST TEST DONE")
 
 
 def jpeg(output_dir):
@@ -1158,7 +1101,7 @@ def jpeg(output_dir):
                 # print(f)
                 image_path = f
                 """Run stegdetect in WSL silently and capture output."""
-                wsl_image_path = image_path.replace("C:\\", "/mnt/c/").replace("\\", "/").lower()
+                # wsl_image_path = image_path.replace("C:\\", "/mnt/c/").replace("\\", "/").lower()
                 result = run_silent_command(f"stegdetect -t o {image_path}")
 
                 # Only print results if stegdetect finds something
@@ -1167,9 +1110,9 @@ def jpeg(output_dir):
                     os.makedirs(jpeg_dir, exist_ok=True)
 
                     shutil.copy(image_path, f"{jpeg_dir}/{filename}")
-                    # print("Stegdetect Output:\n", result)
+                    prGreen(f"Stegdetect Output:\n {result}")
 
-    print("JPEG TEST DONE")
+    prGreen("JPEG TEST DONE")
 
 
 def png(output_dir):
@@ -1183,7 +1126,7 @@ def png(output_dir):
                 # print(f)
                 image_path = f
                 """Run zsteg in WSL silently and capture output."""
-                wsl_image_path = image_path.replace("C:\\", "/mnt/c/").replace("\\", "/").lower()
+                # wsl_image_path = image_path.replace("C:\\", "/mnt/c/").replace("\\", "/").lower()
                 result = run_silent_command(f"zsteg -a {image_path}")
 
                 if result:
@@ -1198,54 +1141,36 @@ def png(output_dir):
                     f = open(f"{png_dir}/{new_filename}", "w")
                     f.write(result)
                     f.close()
-                    # print("Zsteg Output:\n", result)
+                    prGreen(f"Zsteg Output:\n {result}")
 
-    print("PNG TEST DONE")
+    prGreen("PNG TEST DONE")
 
 
 # TODO make the mp3 to wave a funciton and not duplicated
-def audio_integrity(
-        output_dir):  # This is checking integrity need to add one from main machine that runs ai aginst it too files
-    mp3_dir = os.path.join(output_dir, "mp3")
+def audio_integrity(output_dir):
+    def check_wav_properties(f, filename):
+        try:
+            with wave.open(f, "rb") as wav_file:
+                integrity_dir = os.path.join(results_folder, "audio_integrity")
+                os.makedirs(integrity_dir, exist_ok=True)
+                out_file = os.path.join(integrity_dir, f"{os.path.splitext(filename)[0]}.txt")
+                with open(out_file, "w") as log:
+                    log.write(f"Channels: {wav_file.getnchannels()}\n")
+                    log.write(f"Frame rate: {wav_file.getframerate()}\n")
+                    log.write(f"Sample width: {wav_file.getsampwidth()}\n")
+                    log.write(f"Frames: {wav_file.getnframes()}\n")
+                prGreen(f"[AUDIO INTEGRITY] Checked {filename}")
+        except Exception as e:
+            prRed(f"[AUDIO INTEGRITY] Failed to read {filename}: {e}")
+
     wav_dir = os.path.join(output_dir, "wav")
-    if os.path.isdir(mp3_dir):
-        for filename in os.listdir(mp3_dir):
-            f = os.path.join(mp3_dir, filename)
-            # checking if it is a file
-            if os.path.isfile(f):
-                # print(f)
-                src = f
-                file_name = os.path.basename(f)
-                file = os.path.splitext(file_name)
-                dst = os.path.join(wav_dir, file[0] + ".wav")
-
-                # convert wav to mp3
-                sound = AudioSegment.from_mp3(src)
-                sound.export(dst, format="wav")
-
     if os.path.isdir(wav_dir):
-        for filename in tqdm(os.listdir(wav_dir), desc="Audio integrity test: "):
-            f = os.path.join(wav_dir, filename)
-            # checking if it is a file
-            if os.path.isfile(f):
-                # print(f)
-                audio_path = f
-
-                with wave.open(audio_path, "rb") as wav_file:
-                    audio_integrity_dir = os.path.join(results_folder, "audio_integrity")
-                    os.makedirs(audio_integrity_dir, exist_ok=True)
-
-                    base_name, _ = os.path.splitext(filename)
-                    new_filename = f"{base_name}.txt"
-
-                    f = open(f"{audio_integrity_dir}/{new_filename}", "w")
-                    f.write(f"Number of Channels: {wav_file.getnchannels()}\n")
-                    f.write(f"Frame Rate: {wav_file.getframerate()}\n")
-                    f.write(f"Sample Width: {wav_file.getsampwidth()}\n")
-                    f.write(f"Number of Frames: {wav_file.getnframes()}\n")
-                    f.close()
-
-    print("AUDIO INTEGRITY TEST DONE")
+        files = [f for f in os.listdir(wav_dir) if os.path.isfile(os.path.join(wav_dir, f))]
+        with ThreadPoolExecutor(max_workers=os.cpu_count() - 1) as executor:
+            for filename in tqdm(files, desc="Audio integrity test: "):
+                f = os.path.join(wav_dir, filename)
+                executor.submit(check_wav_properties, f, filename)
+    prGreen("AUDIO INTEGRITY TEST DONE")
 
 
 def audio_dectection(output_dir):
@@ -1308,15 +1233,17 @@ def audio_dectection(output_dir):
                     os.makedirs(audio_dectection_dir, exist_ok=True)
 
                     shutil.copy(spectrogram_path, f"{audio_dectection_dir}/{base_name}_spectrogram.png")
-                    # print("Extracted Handwritten Text:", text_handwritten)
+                    prGreen("Message found")
+                    #prGreen(f"Extracted Handwritten Text: {text_handwritten}")
 
                 if text_printed:
                     audio_dectection_dir = os.path.join(results_folder, "audio_dectection")
                     os.makedirs(audio_dectection_dir, exist_ok=True)
 
                     shutil.copy(spectrogram_path, f"{audio_dectection_dir}/{base_name}_spectrogram.png")
-                    # print("Extracted Printed Text:", text_printed)
-    print("AUDIO DECTECTION TEST DONE")
+                    prGreen("Message found")
+                    #prGreen(f"Extracted Printed Text: {text_printed}")
+    prGreen("AUDIO DECTECTION TEST DONE")
 
 
 def binary(output_dir):
@@ -1330,17 +1257,17 @@ def binary(output_dir):
                 # print(f)
                 file_path = f
                 """Run binwalk in WSL silently and capture output."""
-                wsl_file_path = file_path.replace("C:\\", "/mnt/c/").replace("\\", "/").lower()
-                result = run_silent_command(f"binwalk {wsl_file_path}")
+                # wsl_file_path = file_path.replace("C:\\", "/mnt/c/").replace("\\", "/").lower()
+                result = run_silent_command(f"binwalk {file_path}")
 
                 if result:
                     binary_dir = os.path.join(results_folder, "binary")
                     os.makedirs(binary_dir, exist_ok=True)
 
                     shutil.copy(file_path, f"{binary_dir}/{filename}")
-                    # print("Binwalk Output:\n", result)
+                    prYellow(f"Binwalk Output:\n {result}")
 
-    print("BINARY TEST DONE")
+    prGreen("BINARY TEST DONE")
 
 
 def elf_check(output_dir):
@@ -1364,8 +1291,7 @@ def elf_check(output_dir):
 
                 # Check for suspicious traits
                 if is_suspicious_elf(file_path):
-                    pass
-                    # print(f"[!] WARNING: {file_path} may contain suspicious traits (packed, obfuscated, or malicious).")
+                    prGreen(f"[!] WARNING: {file_path} may contain suspicious traits (packed, obfuscated, or malicious).")
 
                 # Check entropy for potential obfuscation
                 entropy = calculate_entropy(file_path)
@@ -1377,9 +1303,8 @@ def elf_check(output_dir):
                     pass
                     # print("very high")
             else:
-                pass
-                # print(f"[-] {file_path} is NOT an ELF file.")
-    print("ELF TEST DONE")
+                prRed(f"[-] {file_path} is NOT an ELF file.")
+    prGreen("ELF TEST DONE")
 
 
 # --------------------------------------------------------------
@@ -1634,7 +1559,7 @@ def create_gui():
                                                                                                                column=2,
                                                                                                                padx=8)
 
-    submit_btn = ttk.Button(inner_frame, text="Submit", command=lambda: start_progress(), bootstyle="success-outline",
+    submit_btn = ttk.Button(inner_frame, text="Submit", command=lambda: run_start_progress_threaded(), bootstyle="success-outline",
                             width=16)  # need to also get the checkbox results
     submit_btn.grid(row=10, column=0, columnspan=3, pady=15)
 
@@ -1642,6 +1567,10 @@ def create_gui():
     progress_frame = ttk.Frame(inner_frame)  # Now correctly placed inside main_frame
     progress_bar = ttk.Progressbar(progress_frame, mode="determinate", length=500, bootstyle="info-striped")
     progress_label = ttk.Label(progress_frame, text="Processing...", bootstyle="info", background="#040D12")
+    
+    def run_start_progress_threaded():
+        thread = threading.Thread(target=start_progress, daemon=True)
+        thread.start()
 
     def start_progress():
         global results_folder
@@ -1656,37 +1585,44 @@ def create_gui():
         results = {group.frame.cget("text"): group.get_selected() for group in groups}
 
         # Print checkbox selections
-        print("Selected Values:", results)
+        # print("Selected Values:", results)
         test_modes = results["Tests"]
         file_types = "*" if results["File Types"] == "all" else results["File Types"]
-        print(test_modes)
-        print(file_types)
+        # print(test_modes)
+        # print(file_types)
 
         # Collect entry values while filtering out hint text
         values = [entry.get() if entry.get() not in [field[1] for field in fields] else "" for entry in entries]
-        print("Submitted Values:", values)
+        # print("Submitted Values:", values)
         url = [values[0]]
+        #print("here")
         ip = values[1]
+        #print("here")
         num_files = values[2]
-        max_depth = int(values[3])
+        #print("here")
+        max_depth = int(values[3]) if values[3] != '' else 0
+        #print("here")
         output_dir = values[4]
+        #print("here")
         local_dir = values[5]
-        print(url, ip, num_files, max_depth, output_dir, local_dir)
+        #print("here")
+        #print(url, ip, num_files, max_depth, output_dir, local_dir)
         
-        num_files = 10 if num_files == '' else int(num_files)
+        #num_files = 10 if num_files == '' else int(num_files)
 
 
         # TODO MAKE IT RUN THE TEST NOW
         # output_dir = os.path.abspath(args.output)
         os.makedirs(output_dir, exist_ok=True)
 
-        if local_dir != "":
+        if local_dir != '':
+            print("IN LOCAL")
             copy_local_files(local_dir, output_dir)
 
-        print("URL NULL: ", url != "", type(url))
+        #print("URL NULL: ", url != "", type(url))
 
         if url != "":
-            print("IN URL")
+            #print("IN URL")
             sources = []
             for u in url:
                 if re.match(r'\d+\.\d+\.\d+\.\d+', u):  # Single IP
@@ -1696,18 +1632,18 @@ def create_gui():
                     sources.extend([f"http://{ip}/" for ip in process_ip_range(u)])
                 else:
                     sources.append(u if u.startswith("http") else f"http://{u}/")
-            print("PAST IP")
+            #print("PAST IP")
 
             threads = []
             temp_file_types = file_types.lower().split(',') if file_types != '*' else []
-            print("PAST TYPES")
+            #print("PAST TYPES")
 
             # For some reason this is not running, only dif is the output_dir is full path
             source_count = 0
             for source in sources:
                 #update_progress(source_count, len(sources))
                 source_count += 1
-                thread = threading.Thread(target=download_from_source,
+                thread = threading.Thread(target=threaded_download,
                                           args=(source, temp_file_types, num_files, file_types == '*', output_dir, set(), max_depth))
                 thread.start()
                 threads.append(thread)
@@ -1731,9 +1667,9 @@ def create_gui():
                 f = os.path.join(jpeg_dir, filename)
                 # checking if it is a file
                 if os.path.isfile(f):
-                    print(f)
+                    #print(f)
                     image_path = f
-                    print(f"{jpg_dir}/{filename}")
+                    #print(f"{jpg_dir}/{filename}")
                     shutil.copy(image_path, f"{jpg_dir}/{filename}")
         # shutil.copytree(jpeg_dir, jpg_dir, dirs_exist_ok=True)
 
@@ -1751,7 +1687,7 @@ def create_gui():
 
         all_test = test_modes == "all"
         
-        print("OUTOUT DIR IS HERE:", output_dir)
+        #print("OUTOUT DIR IS HERE:", output_dir)
 
         # Mapping test modes to their respective functions
         mode_actions = {
@@ -1764,7 +1700,7 @@ def create_gui():
             "audio_integrity": lambda: audio_integrity(output_dir),
             "audio_dectection": lambda: audio_dectection(output_dir),
             "binary": lambda: binary(output_dir),
-            "elf_check": lambda: elf_check(output_dir),
+            #"elf_check": lambda: elf_check(output_dir),
         }
         
         test_count = 0
@@ -1776,7 +1712,10 @@ def create_gui():
                 update_progress(test_count, len(mode_actions.values()))
                 test_count += 1
                 action()
-            return
+            open_directory(results_folder)
+            update_progress(test_count, len(test_modes))
+            test_count += 1
+            
         else:
             for mode in test_modes:
                 action = mode_actions.get(mode)
@@ -1786,7 +1725,10 @@ def create_gui():
                     test_count += 1
                     action()
                 else:
-                    print(f"INVALID TEST MODE: {mode}")
+                    prRed(f"INVALID TEST MODE: {mode}")
+            open_directory(results_folder)
+            update_progress(test_count, len(test_modes))
+            test_count = 0
 
 
     def update_progress(current_value, max_value):
@@ -1821,17 +1763,7 @@ def main():
 
     # Make sure all tools are installed here
     if platform.system() == "Windows":
-        if not is_wsl_installed():
-            install_wsl()
-
-        if not is_tool_installed("stegdetect"):
-            install_stegdetect()
-
-        if not is_tool_installed("zsteg"):
-            install_zsteg()
-
-        if not is_tool_installed("binwalk"):
-            install_binwalk()
+        return
 
     elif platform.system() == "Linux":
         print("Installing tools on Linux...")
@@ -1843,9 +1775,9 @@ def main():
         for command in install_commands:
             result = run_silent_command(command)
             if result:
-                print(f"Success: {command}")
+                prGreen(f"Success: {command}")
             else:
-                print(f"Failure: {command}")
+                prRed(f"Failure: {command}")
         check_and_install_poppler()
         # print("All tools installed successfully on Linux!")
 
@@ -1859,7 +1791,7 @@ def main():
         if args.local:
             copy_local_files(args.local, output_dir)
             
-        print("URL NULL: ", args.url != "", type(args.url))
+        #print("URL NULL: ", args.url != "", type(args.url))
 
         if args.url:
             sources = []
@@ -1876,7 +1808,7 @@ def main():
             file_types = args.types.lower().split(',') if args.types != '*' else []
 
             for source in sources:
-                thread = threading.Thread(target=download_from_source,
+                thread = threading.Thread(target=threaded_download,
                                           args=(source, file_types, args.num, args.types == '*', args.output, set(),
                                                 args.max_depth))
                 thread.start()
@@ -1903,9 +1835,9 @@ def main():
                 f = os.path.join(jpeg_dir, filename)
                 # checking if it is a file
                 if os.path.isfile(f):
-                    print(f)
+                    #print(f)
                     image_path = f
-                    print(f"{jpg_dir}/{filename}")
+                    #print(f"{jpg_dir}/{filename}")
                     shutil.copy(image_path, f"{jpg_dir}/{filename}")
         # shutil.copytree(jpeg_dir, jpg_dir, dirs_exist_ok=True)
 
@@ -1924,7 +1856,7 @@ def main():
         all_test = args.mode == "all"
         test_modes = "all" if all_test else args.mode.lower().split(',')
         
-        print("OUTOUT DIR IS HERE:", output_dir)
+        #print("OUTOUT DIR IS HERE:", output_dir)
 
         # Mapping test modes to their respective functions
         mode_actions = {
@@ -1945,20 +1877,22 @@ def main():
             # Run all tests once and exit
             for action in mode_actions.values():
                 action()
-            return
+            #return
         else:
             for mode in test_modes:
                 action = mode_actions.get(mode)
                 if action:
                     action()
                 else:
-                    print(f"INVALID TEST MODE: {mode}")
+                    prRed(f"INVALID TEST MODE: {mode}")
+                    
+        open_directory(results_folder)
 
-    print("done")
+    prGreen("done")
 
 
 if __name__ == "__main__":
-    print(len(sys.argv))
+    #print(len(sys.argv))
     # sudo python StegoScan.py -u "https://www.uah.edu" -t "pdf,jpg,png" -n 1 -o "downloads" -m "all"
     # sudo python StegoScan.py -l "downloads" -t "*" -n 1 -o "downloads" -m "all"
     # sudo python StegoScan.py -u "https://en.wikipedia.org/wiki/Steganography" -t "*" -o "Out" -m "all" --max_depth 0
@@ -1973,6 +1907,6 @@ if __name__ == "__main__":
 
     # add in levels of verbosity
     
-    # pdf extraction is in the wrong directory
+    # fix local directory for gui
 
     main()
